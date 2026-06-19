@@ -3,6 +3,12 @@
 A lean, async-friendly, dependency-free `Result<T>` type for .NET — plus ASP.NET Core mapping and an
 integration-testing toolkit. Released under MIT.
 
+## How we work
+
+Design-first: before scaffolding or writing non-trivial code, run a **brainstorming** session
+(superpowers `brainstorming` skill) to think through the design, surface trade-offs, and settle open
+questions. Code follows an agreed design, not the other way around.
+
 ## Status
 
 Greenfield. **No code yet** — start from the requirements.
