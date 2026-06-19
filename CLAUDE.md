@@ -34,15 +34,18 @@ tests should pass once this library is mature and swapped in.
 
 ## Borrow sources (local clones, MIT)
 
-Full source of the two libraries we borrow from (requirements §7) is checked out locally — read them
+Full source of the libraries we borrow from (requirements §7) is checked out locally — read them
 directly instead of guessing at their APIs:
 
 - **ErrorOr** — `C:\Users\Robert\source\repos\EXTERNA\error-or` (`src/`, `tests/`, `LICENSE.md`).
   Reference for: implicit `T`/`Error` conversions, `Match`/`Switch`, `Then`/`ThenAsync`, `ErrorType`+code.
 - **FluentResults** — `C:\Users\Robert\source\repos\EXTERNA\FluentResults` (`src/`, `LICENSE`).
   Reference for: typed `IError`, `CausedBy(exception)`, metadata, `Merge`.
+- **OneOf** — `C:\Users\Robert\source\repos\EXTERNA\OneOf` (`OneOf/`, `licence.md`; MIT, Harry McIntyre).
+  Reference for: discriminated-union / exhaustive `Match`/`Switch` ergonomics and the source-generator
+  approach. **Not needed for Core v1** — keep in mind for later (richer match surface, multi-arity unions).
 
-Both are **MIT** — code may be lifted with attribution; retain license notices and credit both in the
+All are **MIT** — code may be lifted with attribution; retain license notices and credit them in the
 README / THIRD-PARTY-NOTICES (requirements §7).
 
 ## Decided so far (requirements §10)
