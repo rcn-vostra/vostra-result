@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>Vostra.Results</PackageId>
+    <Description>A lean, async-friendly, dependency-free Result&lt;T&gt; type for .NET.</Description>
+  </PropertyGroup>
+</Project>
