@@ -1,0 +1,55 @@
+# CLAUDE.md — `vostra-result`
+
+A lean, async-friendly, dependency-free `Result<T>` type for .NET — plus ASP.NET Core mapping and an
+integration-testing toolkit. Released under MIT.
+
+## Status
+
+Greenfield. **No code yet** — start from the requirements.
+
+## Start here
+
+- **[cc/docs/requirements/result-type-requirements.md](cc/docs/requirements/result-type-requirements.md)**
+  — the spec. Functional requirements (`FR-*`), non-functional (`NFR-*`), pain points being fixed
+  (`P*`), strengths being preserved (`S*`), acceptance criteria (§9), and open decisions (§10).
+- **[cc/docs/requirements/result-pattern.md](cc/docs/requirements/result-pattern.md)**
+  — walkthrough of the **existing** FluentResults-based implementation this library replaces.
+
+## Reference repository
+
+The requirements were derived from an existing implementation. Both docs link into it by `file:line`:
+
+```
+C:\Users\Robert\source\repos\_ARCHIVE\VCC\popcat-assortment-admin-api
+```
+
+That repo is the **live regression suite** for migration (see requirements §8) — its integration
+tests should pass once this library is mature and swapped in.
+
+## Borrow sources (local clones, MIT)
+
+Full source of the two libraries we borrow from (requirements §7) is checked out locally — read them
+directly instead of guessing at their APIs:
+
+- **ErrorOr** — `C:\Users\Robert\source\repos\EXTERNA\error-or` (`src/`, `tests/`, `LICENSE.md`).
+  Reference for: implicit `T`/`Error` conversions, `Match`/`Switch`, `Then`/`ThenAsync`, `ErrorType`+code.
+- **FluentResults** — `C:\Users\Robert\source\repos\EXTERNA\FluentResults` (`src/`, `LICENSE`).
+  Reference for: typed `IError`, `CausedBy(exception)`, metadata, `Merge`.
+
+Both are **MIT** — code may be lifted with attribution; retain license notices and credit both in the
+README / THIRD-PARTY-NOTICES (requirements §7).
+
+## Decided so far (requirements §10)
+
+- Type/namespace: **`Result<T>`** in `Vostra.Results` (not "ErrorOr").
+- Error model: **single error, list-capable** (aggregate only when needed).
+- HTTP error envelope: **RFC 7807 `ProblemDetails`**.
+
+Still open: early-exit via control-flow exception (OD-3), serializer default (OD-5), retire-vs-wrap the
+old layer (OD-6).
+
+## Build order
+
+Scaffold in this sequence, using requirements §9 as the gate: **`Core` → `AspNetCore` → `Testing`**.
+Highest-leverage first step is the `Core` `Result<T>` struct + `Error` with implicit conversions and
+`Match` (FR-1, FR-3, FR-4) — that alone resolves P1/P3 and the `default!` footgun.
