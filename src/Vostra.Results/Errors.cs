@@ -1,0 +1,85 @@
+namespace Vostra.Results;
+
+/// <summary>Input failed validation (maps to 400 in the HTTP layer).</summary>
+public sealed class ValidationError : Error
+{
+    /// <summary>Creates a <see cref="ValidationError"/>.</summary>
+    public ValidationError(
+        string message,
+        string code = "General.Validation",
+        Exception? causedBy = null,
+        IReadOnlyDictionary<string, object?>? metadata = null)
+        : base(code, message, ErrorType.Validation, causedBy, metadata) { }
+}
+
+/// <summary>A requested resource was not found (maps to 404).</summary>
+public sealed class NotFoundError : Error
+{
+    /// <summary>Creates a <see cref="NotFoundError"/>.</summary>
+    public NotFoundError(
+        string message,
+        string code = "General.NotFound",
+        Exception? causedBy = null,
+        IReadOnlyDictionary<string, object?>? metadata = null)
+        : base(code, message, ErrorType.NotFound, causedBy, metadata) { }
+}
+
+/// <summary>The request conflicts with current state (maps to 409).</summary>
+public sealed class ConflictError : Error
+{
+    /// <summary>Creates a <see cref="ConflictError"/>.</summary>
+    public ConflictError(
+        string message,
+        string code = "General.Conflict",
+        Exception? causedBy = null,
+        IReadOnlyDictionary<string, object?>? metadata = null)
+        : base(code, message, ErrorType.Conflict, causedBy, metadata) { }
+}
+
+/// <summary>A resource already exists (a conflict; maps to 409).</summary>
+public sealed class AlreadyExistsError : Error
+{
+    /// <summary>Creates an <see cref="AlreadyExistsError"/>.</summary>
+    public AlreadyExistsError(
+        string message,
+        string code = "General.AlreadyExists",
+        Exception? causedBy = null,
+        IReadOnlyDictionary<string, object?>? metadata = null)
+        : base(code, message, ErrorType.Conflict, causedBy, metadata) { }
+}
+
+/// <summary>Authentication is required or failed (maps to 401).</summary>
+public sealed class UnauthorizedError : Error
+{
+    /// <summary>Creates an <see cref="UnauthorizedError"/>.</summary>
+    public UnauthorizedError(
+        string message,
+        string code = "General.Unauthorized",
+        Exception? causedBy = null,
+        IReadOnlyDictionary<string, object?>? metadata = null)
+        : base(code, message, ErrorType.Unauthorized, causedBy, metadata) { }
+}
+
+/// <summary>The caller is authenticated but not permitted (maps to 403).</summary>
+public sealed class ForbiddenError : Error
+{
+    /// <summary>Creates a <see cref="ForbiddenError"/>.</summary>
+    public ForbiddenError(
+        string message,
+        string code = "General.Forbidden",
+        Exception? causedBy = null,
+        IReadOnlyDictionary<string, object?>? metadata = null)
+        : base(code, message, ErrorType.Forbidden, causedBy, metadata) { }
+}
+
+/// <summary>An unexpected fault (maps to 500). Often wraps an exception via <see cref="Error.CausedBy"/>.</summary>
+public sealed class UnexpectedError : Error
+{
+    /// <summary>Creates an <see cref="UnexpectedError"/>.</summary>
+    public UnexpectedError(
+        string message,
+        string code = "General.Unexpected",
+        Exception? causedBy = null,
+        IReadOnlyDictionary<string, object?>? metadata = null)
+        : base(code, message, ErrorType.Unexpected, causedBy, metadata) { }
+}
