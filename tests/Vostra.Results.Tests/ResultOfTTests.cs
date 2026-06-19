@@ -60,4 +60,32 @@ public class ResultOfTTests
         Produce(true).ToString().Should().Contain("Success");
         Produce(false).ToString().Should().Contain("Error");
     }
+
+    [Fact]
+    public void Error_array_converts_implicitly_to_failure()
+    {
+        Result<int> result = new Error[] { new NotFoundError("a"), new ConflictError("b") };
+
+        result.IsError.Should().BeTrue();
+        result.Errors.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void Error_list_converts_implicitly_to_failure()
+    {
+        Result<int> result = new List<Error> { new ValidationError("a") };
+
+        result.IsError.Should().BeTrue();
+        result.FirstError.Should().BeOfType<ValidationError>();
+    }
+
+    [Fact]
+    public void Null_reference_success_does_not_throw_on_hashcode()
+    {
+        Result<string?> result = (string?)null;
+
+        result.IsSuccess.Should().BeTrue();
+        var act = () => result.GetHashCode();
+        act.Should().NotThrow();
+    }
 }

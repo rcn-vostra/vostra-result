@@ -77,7 +77,7 @@ public readonly struct Result<T> : IEquatable<Result<T>>
     public override int GetHashCode() =>
         IsError
             ? Errors.Aggregate(17, (hash, error) => HashCode.Combine(hash, error))
-            : EqualityComparer<T>.Default.GetHashCode(_value!);
+            : _value is null ? 0 : EqualityComparer<T>.Default.GetHashCode(_value);
 
     /// <summary>Value equality.</summary>
     public static bool operator ==(Result<T> left, Result<T> right) => left.Equals(right);
