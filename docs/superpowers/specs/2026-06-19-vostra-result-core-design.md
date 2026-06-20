@@ -74,8 +74,9 @@ abstract Error {
 `enum ErrorType { Validation, NotFound, Conflict, Unauthorized, Forbidden, Unexpected, Failure }`.
 
 - Consumers extend by subclassing `Error` and choosing a `Type` (FR-2.2 extensibility).
-- Value equality on `Code` + `Type` + `Message` (metadata compared structurally when present; `CausedBy`
-  compared by reference) so tests can assert error **identity** (FR-1.4, groundwork for FR-11.3).
+- Value equality on concrete type + `Code` + `Type` + `Message`. `CausedBy` and `Metadata` are intentionally
+  excluded from equality so tests can assert error **identity** (FR-1.4 / FR-11.3) regardless of the wrapped
+  exception or bag.
 - Re-wrapping / aggregating preserves concrete type, `Code`, and `CausedBy` (FR-2.4, fixes P11).
 - `Error` is a reference type; it allocates only on the failure path, which NFR-2 permits.
 

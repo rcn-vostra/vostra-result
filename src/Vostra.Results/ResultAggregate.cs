@@ -26,6 +26,17 @@ public readonly partial struct Result
 /// <summary>Throttled async projection that collects results, porting the reference repo's SelectAsync.</summary>
 public static class ResultCollectionExtensions
 {
+    /// <summary>Combines a sequence of value-results into one, collecting values in order or accumulating all errors.</summary>
+    public static Result<IReadOnlyList<T>> Combine<T>(this IEnumerable<Result<T>> results) =>
+        Result.Combine(results as Result<T>[] ?? System.Linq.Enumerable.ToArray(results));
+
+    /// <summary>Combines a sequence of valueless results into one, accumulating all errors.</summary>
+    public static Result Combine(this IEnumerable<Result> results) =>
+        Result.Combine(results as Result[] ?? System.Linq.Enumerable.ToArray(results));
+
+    // NOTE: `selector` should return failures as Result values, not throw. A thrown exception
+    // propagates out of Task.WhenAll and bypasses the errors-as-values contract.
+
     /// <summary>
     /// Projects each item through <paramref name="selector"/> with at most
     /// <paramref name="maxConcurrency"/> concurrent invocations, then combines the results.

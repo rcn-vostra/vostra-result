@@ -75,4 +75,31 @@ public class AggregationTests
 
         peak.Should().BeLessThanOrEqualTo(3);
     }
+
+    [Fact]
+    public void Combine_over_enumerable_of_generic_collects_in_order()
+    {
+        IEnumerable<Result<int>> results = new[] { Result.Ok(1), Result.Ok(2), Result.Ok(3) };
+
+        var combined = results.Combine();
+
+        combined.IsSuccess.Should().BeTrue();
+        combined.Match(v => v, _ => Array.Empty<int>()).Should().Equal(1, 2, 3);
+    }
+
+    [Fact]
+    public void Combine_over_enumerable_of_nongeneric_accumulates_errors()
+    {
+        IEnumerable<Result> results = new[]
+        {
+            Result.Success,
+            Result.Failure(new ValidationError("a")),
+            Result.Failure(new ValidationError("b")),
+        };
+
+        var combined = results.Combine();
+
+        combined.IsError.Should().BeTrue();
+        combined.Errors.Should().HaveCount(2);
+    }
 }
