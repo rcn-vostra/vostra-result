@@ -1,6 +1,6 @@
 namespace Vostra.Results;
 
-/// <summary>Input failed validation (maps to 400 in the HTTP layer).</summary>
+/// <summary>Input failed validation.</summary>
 public sealed class ValidationError : Error
 {
     /// <summary>Creates a <see cref="ValidationError"/>.</summary>
@@ -12,7 +12,7 @@ public sealed class ValidationError : Error
         : base(code, message, ErrorType.Validation, causedBy, metadata) { }
 }
 
-/// <summary>A requested resource was not found (maps to 404).</summary>
+/// <summary>A requested resource was not found.</summary>
 public sealed class NotFoundError : Error
 {
     /// <summary>Creates a <see cref="NotFoundError"/>.</summary>
@@ -24,7 +24,7 @@ public sealed class NotFoundError : Error
         : base(code, message, ErrorType.NotFound, causedBy, metadata) { }
 }
 
-/// <summary>The request conflicts with current state (maps to 409).</summary>
+/// <summary>The request conflicts with current state.</summary>
 public sealed class ConflictError : Error
 {
     /// <summary>Creates a <see cref="ConflictError"/>.</summary>
@@ -36,7 +36,7 @@ public sealed class ConflictError : Error
         : base(code, message, ErrorType.Conflict, causedBy, metadata) { }
 }
 
-/// <summary>A resource already exists (a conflict; maps to 409).</summary>
+/// <summary>A resource already exists (a conflict).</summary>
 public sealed class AlreadyExistsError : Error
 {
     /// <summary>Creates an <see cref="AlreadyExistsError"/>.</summary>
@@ -48,7 +48,7 @@ public sealed class AlreadyExistsError : Error
         : base(code, message, ErrorType.Conflict, causedBy, metadata) { }
 }
 
-/// <summary>Authentication is required or failed (maps to 401).</summary>
+/// <summary>Authentication is required or failed.</summary>
 public sealed class UnauthorizedError : Error
 {
     /// <summary>Creates an <see cref="UnauthorizedError"/>.</summary>
@@ -60,7 +60,7 @@ public sealed class UnauthorizedError : Error
         : base(code, message, ErrorType.Unauthorized, causedBy, metadata) { }
 }
 
-/// <summary>The caller is authenticated but not permitted (maps to 403).</summary>
+/// <summary>The caller is authenticated but not permitted.</summary>
 public sealed class ForbiddenError : Error
 {
     /// <summary>Creates a <see cref="ForbiddenError"/>.</summary>
@@ -72,7 +72,7 @@ public sealed class ForbiddenError : Error
         : base(code, message, ErrorType.Forbidden, causedBy, metadata) { }
 }
 
-/// <summary>An unexpected fault (maps to 500). Often wraps an exception via <see cref="Error.CausedBy"/>.</summary>
+/// <summary>An unexpected fault. Often wraps an exception via <see cref="Error.CausedBy"/>.</summary>
 public sealed class UnexpectedError : Error
 {
     /// <summary>Creates an <see cref="UnexpectedError"/>.</summary>

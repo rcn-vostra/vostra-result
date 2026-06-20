@@ -19,6 +19,7 @@ public readonly partial struct Result : IEquatable<Result>
     public static Result Success { get; } = new(initialized: true, errors: null);
 
     internal static Result FromErrors(Error[] errors) =>
+        // Empty/null error array would read as success; substitute the uninitialized sentinel so it stays faulted.
         new(initialized: true, errors: errors is { Length: > 0 } ? errors : ResultSentinels.UninitializedArray);
 
     /// <summary>Creates a failed result from a single error.</summary>

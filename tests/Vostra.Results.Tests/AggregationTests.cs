@@ -53,7 +53,7 @@ public class AggregationTests
             await items.SelectAsync(i => Task.FromResult<Result<int>>(i * 2), maxConcurrency: 2);
 
         result.IsSuccess.Should().BeTrue();
-        result.Match(v => v, _ => Array.Empty<int>()).Should().BeEquivalentTo(new[] { 2, 4, 6 });
+        result.Match(v => v, _ => Array.Empty<int>()).Should().Equal(2, 4, 6);
     }
 
     [Fact]

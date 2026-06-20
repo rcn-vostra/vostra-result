@@ -21,6 +21,7 @@ public readonly partial struct Result<T> : IEquatable<Result<T>>
     internal static Result<T> Ok(T value) => new(initialized: true, value, errors: null);
 
     internal static Result<T> Err(Error[] errors) =>
+        // Empty/null error array would read as success; substitute the uninitialized sentinel so it stays faulted.
         new(initialized: true, value: default,
             errors: errors is { Length: > 0 } ? errors : ResultSentinels.UninitializedArray);
 
