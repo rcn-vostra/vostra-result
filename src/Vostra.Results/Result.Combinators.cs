@@ -33,4 +33,12 @@ public readonly partial struct Result
     /// <summary>Fails with a <see cref="ValidationError"/> when <paramref name="predicate"/> is false.</summary>
     public Result Ensure(Func<bool> predicate, string validationMessage) =>
         Ensure(predicate, new ValidationError(validationMessage));
+
+    /// <summary>Async <see cref="Then(Func{Result})"/>.</summary>
+    public Task<Result> Then(Func<Task<Result>> next) =>
+        IsError ? Task.FromResult(this) : next();
+
+    /// <summary>Async <see cref="Then{T}(Func{Result{T}})"/>.</summary>
+    public Task<Result<T>> Then<T>(Func<Task<Result<T>>> next) =>
+        IsError ? Task.FromResult(Result<T>.Err(ErrorArray)) : next();
 }

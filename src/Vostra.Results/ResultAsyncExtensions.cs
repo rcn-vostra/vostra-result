@@ -5,7 +5,7 @@ namespace Vostra.Results;
 /// instance combinator, so a chain "lifts" to Task&lt;Result&lt;&gt;&gt; on its first async step
 /// and stays there — one leading await, sync and async steps interleave freely.
 /// </summary>
-public static class ResultAsyncExtensions
+public static partial class ResultAsyncExtensions
 {
     // ---- Map ----
     /// <summary>Async-receiver, sync projection.</summary>
