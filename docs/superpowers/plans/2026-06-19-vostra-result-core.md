@@ -19,7 +19,7 @@
 - Success path allocates nothing; only the failure path allocates (NFR-2).
 - Tests are written as **usage scenarios** (call-site shapes), not internal-state pokes.
 - Commit after every task with a conventional-commit message.
-- Commit message footer line: `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`
+- Commit message must never contain : `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>` or anything related, constantly check and clenan out any Claude-related information in commits and code
 
 ---
 

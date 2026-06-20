@@ -4,6 +4,8 @@ A lean, async-friendly, dependency-free `Result<T>` type for .NET — plus ASP.N
 integration-testing toolkit. Released under MIT.
 
 ## How we work
+Commit message must never contain : `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>` or anything related, constantly check and clenan out any Claude-related information in commits and code
+
 
 Design-first: before scaffolding or writing non-trivial code, run a **brainstorming** session
 (superpowers `brainstorming` skill) to think through the design, surface trade-offs, and settle open
@@ -62,3 +64,7 @@ old layer (OD-6).
 Scaffold in this sequence, using requirements §9 as the gate: **`Core` → `AspNetCore` → `Testing`**.
 Highest-leverage first step is the `Core` `Result<T>` struct + `Error` with implicit conversions and
 `Match` (FR-1, FR-3, FR-4) — that alone resolves P1/P3 and the `default!` footgun.
+
+
+# Clean out any Claude-related infrormation
+Commit message must never contain : `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>` or anything related, constantly check and clenan out any Claude-related information in commits and code
