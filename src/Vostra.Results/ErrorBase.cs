@@ -37,6 +37,25 @@ public abstract class ErrorBase : IEquatable<ErrorBase>
     /// <summary>Optional metadata bag (opt-in).</summary>
     public IReadOnlyDictionary<string, object?>? Metadata { get; }
 
+    /// <summary>Creates a copy of this error (same concrete type) with the given fields. Subclasses override.</summary>
+    protected abstract ErrorBase CloneWith(
+        string code,
+        string message,
+        Exception? causedBy,
+        IReadOnlyDictionary<string, object?>? metadata);
+
+    /// <summary>Returns a copy with a different <see cref="Code"/>, preserving the concrete type.</summary>
+    public ErrorBase WithCode(string code) => CloneWith(code, Message, CausedBy, Metadata);
+
+    /// <summary>Returns a copy whose <see cref="Message"/> is prefixed (e.g. "shipping: original").</summary>
+    public ErrorBase Prefix(string prefix) => CloneWith(Code, $"{prefix}: {Message}", CausedBy, Metadata);
+
+    /// <summary>Returns a copy with the given <see cref="Metadata"/>, preserving the concrete type.</summary>
+    public ErrorBase WithMetadata(IReadOnlyDictionary<string, object?> metadata) => CloneWith(Code, Message, CausedBy, metadata);
+
+    /// <summary>Returns a copy with the given <see cref="CausedBy"/>, preserving the concrete type.</summary>
+    public ErrorBase WithCausedBy(Exception causedBy) => CloneWith(Code, Message, causedBy, Metadata);
+
     /// <summary>Value equality on concrete type, <see cref="Type"/>, <see cref="Code"/>, and <see cref="Message"/>.</summary>
     public bool Equals(ErrorBase? other) =>
         other is not null

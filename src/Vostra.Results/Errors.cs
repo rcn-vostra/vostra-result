@@ -10,6 +10,10 @@ public sealed class ValidationError : ErrorBase
         Exception? causedBy = null,
         IReadOnlyDictionary<string, object?>? metadata = null)
         : base(code, message, ErrorType.Validation, causedBy, metadata) { }
+
+    /// <inheritdoc />
+    protected override ErrorBase CloneWith(string code, string message, Exception? causedBy, IReadOnlyDictionary<string, object?>? metadata) =>
+        new ValidationError(message, code, causedBy, metadata);
 }
 
 /// <summary>A requested resource was not found.</summary>
@@ -22,6 +26,10 @@ public sealed class NotFoundError : ErrorBase
         Exception? causedBy = null,
         IReadOnlyDictionary<string, object?>? metadata = null)
         : base(code, message, ErrorType.NotFound, causedBy, metadata) { }
+
+    /// <inheritdoc />
+    protected override ErrorBase CloneWith(string code, string message, Exception? causedBy, IReadOnlyDictionary<string, object?>? metadata) =>
+        new NotFoundError(message, code, causedBy, metadata);
 }
 
 /// <summary>The request conflicts with current state.</summary>
@@ -34,6 +42,10 @@ public sealed class ConflictError : ErrorBase
         Exception? causedBy = null,
         IReadOnlyDictionary<string, object?>? metadata = null)
         : base(code, message, ErrorType.Conflict, causedBy, metadata) { }
+
+    /// <inheritdoc />
+    protected override ErrorBase CloneWith(string code, string message, Exception? causedBy, IReadOnlyDictionary<string, object?>? metadata) =>
+        new ConflictError(message, code, causedBy, metadata);
 }
 
 /// <summary>A resource already exists (a conflict).</summary>
@@ -46,6 +58,10 @@ public sealed class AlreadyExistsError : ErrorBase
         Exception? causedBy = null,
         IReadOnlyDictionary<string, object?>? metadata = null)
         : base(code, message, ErrorType.Conflict, causedBy, metadata) { }
+
+    /// <inheritdoc />
+    protected override ErrorBase CloneWith(string code, string message, Exception? causedBy, IReadOnlyDictionary<string, object?>? metadata) =>
+        new AlreadyExistsError(message, code, causedBy, metadata);
 }
 
 /// <summary>Authentication is required or failed.</summary>
@@ -58,6 +74,10 @@ public sealed class UnauthorizedError : ErrorBase
         Exception? causedBy = null,
         IReadOnlyDictionary<string, object?>? metadata = null)
         : base(code, message, ErrorType.Unauthorized, causedBy, metadata) { }
+
+    /// <inheritdoc />
+    protected override ErrorBase CloneWith(string code, string message, Exception? causedBy, IReadOnlyDictionary<string, object?>? metadata) =>
+        new UnauthorizedError(message, code, causedBy, metadata);
 }
 
 /// <summary>The caller is authenticated but not permitted.</summary>
@@ -70,6 +90,10 @@ public sealed class ForbiddenError : ErrorBase
         Exception? causedBy = null,
         IReadOnlyDictionary<string, object?>? metadata = null)
         : base(code, message, ErrorType.Forbidden, causedBy, metadata) { }
+
+    /// <inheritdoc />
+    protected override ErrorBase CloneWith(string code, string message, Exception? causedBy, IReadOnlyDictionary<string, object?>? metadata) =>
+        new ForbiddenError(message, code, causedBy, metadata);
 }
 
 /// <summary>
@@ -88,4 +112,8 @@ public sealed class Error : ErrorBase
         Exception? causedBy = null,
         IReadOnlyDictionary<string, object?>? metadata = null)
         : base(code, message, ErrorType.Unexpected, causedBy, metadata) { }
+
+    /// <inheritdoc />
+    protected override ErrorBase CloneWith(string code, string message, Exception? causedBy, IReadOnlyDictionary<string, object?>? metadata) =>
+        new Error(message, code, causedBy, metadata);
 }
