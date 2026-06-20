@@ -63,4 +63,43 @@ public class ResultCombinatorTests
         var r = Err().MapError(e => new ValidationError(e.Message, code: "remapped"));
         r.FirstError.Code.Should().Be("remapped");
     }
+
+    [Fact]
+    public void MatchFirst_runs_success_and_first_error_branches()
+    {
+        Ok().MatchFirst(() => "ok", e => e.Message).Should().Be("ok");
+        Err().MatchFirst(() => "ok", e => e.Message).Should().Be("dup");
+    }
+
+    [Fact]
+    public void SwitchFirst_invokes_matching_branch()
+    {
+        var seen = "";
+        Ok().SwitchFirst(() => seen = "ok", _ => seen = "err");
+        seen.Should().Be("ok");
+        Err().SwitchFirst(() => seen = "ok", e => seen = e.Message);
+        seen.Should().Be("dup");
+    }
+
+    [Fact]
+    public void Then_valueless_chains_on_success_and_propagates_on_error()
+    {
+        var ran = false;
+        Ok().Then(() => { ran = true; return Result.Success; }).IsSuccess.Should().BeTrue();
+        ran.Should().BeTrue();
+
+        ran = false;
+        var propagated = Err().Then(() => { ran = true; return Result.Success; });
+        ran.Should().BeFalse();
+        propagated.IsError.Should().BeTrue();
+        propagated.FirstError.Should().BeOfType<ConflictError>();
+    }
+
+    [Fact]
+    public void Ensure_with_error_already_set_skips_predicate()
+    {
+        var r = Err().Ensure(() => throw new InvalidOperationException("should not run"), new ValidationError("x"));
+        r.IsError.Should().BeTrue();
+        r.FirstError.Should().BeOfType<ConflictError>();
+    }
 }
