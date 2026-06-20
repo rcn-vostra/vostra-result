@@ -76,5 +76,5 @@ public readonly partial struct Result : IEquatable<Result>
     public static bool operator !=(Result left, Result right) => !left.Equals(right);
 
     /// <inheritdoc />
-    public override string ToString() => IsError ? $"ErrorBase[{Errors.Count}]({FirstError})" : "Success";
+    public override string ToString() => IsError ? $"Error[{Errors.Count}]({FirstError})" : "Success";
 }

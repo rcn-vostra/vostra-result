@@ -58,7 +58,7 @@ public class ResultOfTTests
     public void ToString_distinguishes_success_and_error()
     {
         Produce(true).ToString().Should().Contain("Success");
-        Produce(false).ToString().Should().Contain("ErrorBase");
+        Produce(false).ToString().Should().Contain("Error");
     }
 
     [Fact]

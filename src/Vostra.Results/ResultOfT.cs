@@ -88,5 +88,5 @@ public readonly partial struct Result<T> : IEquatable<Result<T>>
 
     /// <inheritdoc />
     public override string ToString() =>
-        IsError ? $"ErrorBase[{Errors.Count}]({FirstError})" : $"Success({_value})";
+        IsError ? $"Error[{Errors.Count}]({FirstError})" : $"Success({_value})";
 }
