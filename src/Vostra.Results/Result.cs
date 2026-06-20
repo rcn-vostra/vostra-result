@@ -4,7 +4,7 @@ namespace Vostra.Results;
 /// A success/failure result without a value, for void-returning operations.
 /// Also the single discoverable entry point for explicit factories.
 /// </summary>
-public readonly struct Result : IEquatable<Result>
+public readonly partial struct Result : IEquatable<Result>
 {
     private readonly Error[]? _errors;
     private readonly bool _initialized;
