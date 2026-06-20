@@ -26,7 +26,7 @@ public sealed class SuccessEnvelope<T>
 
     /// <summary>The response payload; omitted from JSON when null.</summary>
     [JsonPropertyName("data")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public T? Data { get; init; }
 }
 
