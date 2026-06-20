@@ -45,7 +45,7 @@ public static class ToHttpResponseExtensions
         var operationId = OperationId(http);
         if (result.IsSuccess)
         {
-            var envelope = new SuccessEnvelope<object?> { OperationId = operationId, Data = null };
+            var envelope = new SuccessNoDataEnvelope { OperationId = operationId };
             return HttpResults.Json(envelope, statusCode: SuccessStatus(result.SuccessKind));
         }
 

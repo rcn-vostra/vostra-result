@@ -74,6 +74,17 @@ public class ToHttpResponseTests
     }
 
     [Fact]
+    public async Task Ok_with_default_value_still_includes_data_field()
+    {
+        Result<int> result = 0;
+        var ctx = Context();
+        var res = await HttpResultHarness.Execute(result.ToHttpResponse(ctx), ctx.RequestServices);
+
+        res.Status.Should().Be(200);
+        res.Json.GetProperty("data").GetInt32().Should().Be(0);
+    }
+
+    [Fact]
     public async Task OperationId_prefers_current_activity()
     {
         using var activity = new Activity("test").Start();

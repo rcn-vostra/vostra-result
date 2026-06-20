@@ -15,9 +15,9 @@ public class EnvelopeTests
     }
 
     [Fact]
-    public void SuccessEnvelope_serializes_camelCase_and_omits_null_data()
+    public void SuccessNoDataEnvelope_serializes_camelCase_and_omits_data()
     {
-        var json = JsonSerializer.Serialize(new SuccessEnvelope<object?> { OperationId = "op1", Data = null });
+        var json = JsonSerializer.Serialize(new SuccessNoDataEnvelope { OperationId = "op1" });
         json.Should().Contain("\"operationId\":\"op1\"");
         json.Should().NotContain("data");
     }

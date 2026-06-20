@@ -24,10 +24,17 @@ public sealed class SuccessEnvelope<T>
     [JsonPropertyName("operationId")]
     public string? OperationId { get; init; }
 
-    /// <summary>The response payload; omitted from JSON when null.</summary>
+    /// <summary>The response payload.</summary>
     [JsonPropertyName("data")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public T? Data { get; init; }
+}
+
+/// <summary>Success envelope for a valueless (non-generic) result — carries only the operation id.</summary>
+internal sealed class SuccessNoDataEnvelope
+{
+    /// <summary>Correlation/operation id for the request.</summary>
+    [JsonPropertyName("operationId")]
+    public string? OperationId { get; init; }
 }
 
 /// <summary>Success envelope for a paginated list.</summary>

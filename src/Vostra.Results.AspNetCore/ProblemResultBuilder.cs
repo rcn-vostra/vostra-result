@@ -11,7 +11,7 @@ internal static class ProblemResultBuilder
     private const string ProblemJson = "application/problem+json";
 
     /// <summary>Builds an error response. All-validation errors render a field map; otherwise ProblemDetails.</summary>
-    public static IResult Build(IReadOnlyList<ErrorBase> errors, VostraResultsOptions options, string operationId)
+    internal static IResult Build(IReadOnlyList<ErrorBase> errors, VostraResultsOptions options, string operationId)
     {
         var first = errors[0];
         var status = ErrorStatusResolver.Resolve(first, options);
