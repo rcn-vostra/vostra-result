@@ -35,4 +35,19 @@ public class ErrorRewrapTests
         wrapped.Should().BeOfType<Error>();
         wrapped.CausedBy.Should().BeSameAs(ex);
     }
+
+    [Fact]
+    public void WithMetadata_attaches_metadata_preserving_type_code_and_message()
+    {
+        ErrorBase original = new ValidationError("bad input", code: "Order.Invalid");
+        var meta = new Dictionary<string, object?> { ["field"] = "email" };
+
+        var withMeta = original.WithMetadata(meta);
+
+        withMeta.Should().BeOfType<ValidationError>();
+        withMeta.Metadata.Should().ContainKey("field");
+        withMeta.Code.Should().Be("Order.Invalid");
+        withMeta.Message.Should().Be("bad input");
+        withMeta.Type.Should().Be(ErrorType.Validation);
+    }
 }
