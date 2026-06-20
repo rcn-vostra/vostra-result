@@ -33,6 +33,7 @@ public class ToHttpResponseTests
         var res = await HttpResultHarness.Execute(result.ToHttpResponse(ctx), ctx.RequestServices);
 
         res.Status.Should().Be(200);
+        res.ContentType.Should().StartWith("application/json");
         res.Json.GetProperty("data").GetInt32().Should().Be(42);
         res.Json.GetProperty("operationId").GetString().Should().Be("trace-xyz");
     }
@@ -59,6 +60,19 @@ public class ToHttpResponseTests
         res.Status.Should().Be(200);
         res.Json.GetProperty("data").GetArrayLength().Should().Be(3);
         res.Json.GetProperty("pagination").GetProperty("totalCount").GetInt64().Should().Be(3);
+    }
+
+    [Fact]
+    public async Task Empty_collection_returns_empty_data_array()
+    {
+        Result<IEnumerable<int>> result = Result.Ok<IEnumerable<int>>(Array.Empty<int>());
+        var ctx = Context();
+        var res = await HttpResultHarness.Execute(
+            result.ToHttpResponse(ctx, new Pagination(1, 20, 0)), ctx.RequestServices);
+
+        res.Status.Should().Be(200);
+        res.Json.GetProperty("data").GetArrayLength().Should().Be(0);
+        res.Json.GetProperty("pagination").GetProperty("totalCount").GetInt64().Should().Be(0);
     }
 
     [Fact]
@@ -165,6 +179,25 @@ public class ToHttpResponseTests
         errors.GetProperty("Sku")[0].GetString().Should().Be("required");
         errors.GetProperty("Price")[0].GetString().Should().Be("must be > 0");
         res.Json.GetProperty("errorType").GetString().Should().Be("Validation");
+    }
+
+    [Fact]
+    public async Task Validation_errors_on_same_field_merge_into_one_key()
+    {
+        var skuField = new Dictionary<string, object?> { ["field"] = "Sku" };
+        Result<int> result = new ErrorBase[]
+        {
+            new ValidationError("required", metadata: skuField),
+            new ValidationError("too short", metadata: skuField),
+        };
+        var ctx = Context();
+        var res = await HttpResultHarness.Execute(result.ToHttpResponse(ctx), ctx.RequestServices);
+
+        res.Status.Should().Be(400);
+        var sku = res.Json.GetProperty("errors").GetProperty("Sku");
+        sku.GetArrayLength().Should().Be(2);
+        sku[0].GetString().Should().Be("required");
+        sku[1].GetString().Should().Be("too short");
     }
 
     [Fact]

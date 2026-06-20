@@ -30,7 +30,7 @@ public static class ToHttpResponseExtensions
             var envelope = new ListEnvelope<T>
             {
                 OperationId = operationId,
-                Data = value.ToList(),
+                Data = (value ?? Enumerable.Empty<T>()).ToList(),
                 Pagination = pagination,
             };
             return HttpResults.Json(envelope, statusCode: SuccessStatus(result.SuccessKind));
