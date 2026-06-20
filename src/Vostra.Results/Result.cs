@@ -52,6 +52,8 @@ public readonly partial struct Result : IEquatable<Result>
     public IReadOnlyList<ErrorBase> Errors =>
         _errors ?? (_initialized ? Array.Empty<ErrorBase>() : ResultSentinels.UninitializedList);
 
+    internal ErrorBase[] ErrorArray => _errors ?? ResultSentinels.UninitializedArray;
+
     /// <summary>The first error. Throws if this is a success.</summary>
     public ErrorBase FirstError =>
         IsError ? Errors[0] : throw new InvalidOperationException("Result is a success; there is no error.");
