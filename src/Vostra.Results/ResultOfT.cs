@@ -10,23 +10,31 @@ public readonly partial struct Result<T> : IEquatable<Result<T>>
     private readonly T? _value;
     private readonly ErrorBase[]? _errors;
     private readonly bool _initialized;
+    private readonly SuccessKind _successKind;
 
-    private Result(bool initialized, T? value, ErrorBase[]? errors)
+    private Result(bool initialized, T? value, ErrorBase[]? errors, SuccessKind successKind)
     {
         _initialized = initialized;
         _value = value;
         _errors = errors;
+        _successKind = successKind;
     }
 
-    internal static Result<T> Ok(T value) => new(initialized: true, value, errors: null);
+    internal static Result<T> Ok(T value) => new(initialized: true, value, errors: null, SuccessKind.Ok);
+
+    internal static Result<T> Created(T value) => new(initialized: true, value, errors: null, SuccessKind.Created);
 
     internal static Result<T> Err(ErrorBase[] errors) =>
         // Empty/null error array would read as success; substitute the uninitialized sentinel so it stays faulted.
         new(initialized: true, value: default,
-            errors: errors is { Length: > 0 } ? errors : ResultSentinels.UninitializedArray);
+            errors: errors is { Length: > 0 } ? errors : ResultSentinels.UninitializedArray,
+            SuccessKind.Ok);
 
     /// <summary>True when this result carries a value.</summary>
     public bool IsSuccess => !IsError;
+
+    /// <summary>The kind of success (<see cref="SuccessKind.Ok"/> or <see cref="SuccessKind.Created"/>); <see cref="SuccessKind.Ok"/> for failures.</summary>
+    public SuccessKind SuccessKind => _successKind;
 
     /// <summary>True when this result carries error(s), including the uninitialized <c>default</c>.</summary>
     public bool IsError => !_initialized || _errors is not null;
@@ -68,7 +76,7 @@ public readonly partial struct Result<T> : IEquatable<Result<T>>
 
         return IsError
             ? Errors.SequenceEqual(other.Errors)
-            : EqualityComparer<T>.Default.Equals(_value, other._value);
+            : _successKind == other._successKind && EqualityComparer<T>.Default.Equals(_value, other._value);
     }
 
     /// <inheritdoc />
@@ -78,7 +86,7 @@ public readonly partial struct Result<T> : IEquatable<Result<T>>
     public override int GetHashCode() =>
         IsError
             ? Errors.Aggregate(17, (hash, error) => HashCode.Combine(hash, error))
-            : _value is null ? 0 : EqualityComparer<T>.Default.GetHashCode(_value);
+            : HashCode.Combine(_successKind, _value is null ? 0 : EqualityComparer<T>.Default.GetHashCode(_value));
 
     /// <summary>Value equality.</summary>
     public static bool operator ==(Result<T> left, Result<T> right) => left.Equals(right);

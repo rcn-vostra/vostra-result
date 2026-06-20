@@ -8,19 +8,27 @@ public readonly partial struct Result : IEquatable<Result>
 {
     private readonly ErrorBase[]? _errors;
     private readonly bool _initialized;
+    private readonly SuccessKind _successKind;
 
-    private Result(bool initialized, ErrorBase[]? errors)
+    private Result(bool initialized, ErrorBase[]? errors, SuccessKind successKind)
     {
         _initialized = initialized;
         _errors = errors;
+        _successKind = successKind;
     }
 
     /// <summary>A successful (valueless) result.</summary>
-    public static Result Success { get; } = new(initialized: true, errors: null);
+    public static Result Success { get; } = new(initialized: true, errors: null, SuccessKind.Ok);
+
+    /// <summary>A successful (valueless) result that created a new resource.</summary>
+    public static Result Created() => new(initialized: true, errors: null, SuccessKind.Created);
+
+    /// <summary>Creates a successful <c>Result&lt;T&gt;</c> that created a new resource.</summary>
+    public static Result<T> Created<T>(T value) => Result<T>.Created(value);
 
     internal static Result FromErrors(ErrorBase[] errors) =>
         // Empty/null error array would read as success; substitute the uninitialized sentinel so it stays faulted.
-        new(initialized: true, errors: errors is { Length: > 0 } ? errors : ResultSentinels.UninitializedArray);
+        new(initialized: true, errors: errors is { Length: > 0 } ? errors : ResultSentinels.UninitializedArray, SuccessKind.Ok);
 
     /// <summary>Creates a failed result from a single error.</summary>
     public static Result Failure(ErrorBase error) => FromErrors(new[] { error });
@@ -33,6 +41,9 @@ public readonly partial struct Result : IEquatable<Result>
 
     /// <summary>True when this result is a success.</summary>
     public bool IsSuccess => !IsError;
+
+    /// <summary>The kind of success; <see cref="SuccessKind.Ok"/> for failures.</summary>
+    public SuccessKind SuccessKind => _successKind;
 
     /// <summary>True when this result carries error(s), including the uninitialized <c>default</c>.</summary>
     public bool IsError => !_initialized || _errors is not null;
@@ -59,7 +70,7 @@ public readonly partial struct Result : IEquatable<Result>
             return false;
         }
 
-        return !IsError || Errors.SequenceEqual(other.Errors);
+        return IsError ? Errors.SequenceEqual(other.Errors) : _successKind == other._successKind;
     }
 
     /// <inheritdoc />
@@ -67,7 +78,7 @@ public readonly partial struct Result : IEquatable<Result>
 
     /// <inheritdoc />
     public override int GetHashCode() =>
-        IsError ? Errors.Aggregate(17, (hash, error) => HashCode.Combine(hash, error)) : 0;
+        IsError ? Errors.Aggregate(17, (hash, error) => HashCode.Combine(hash, error)) : (int)_successKind;
 
     /// <summary>Value equality.</summary>
     public static bool operator ==(Result left, Result right) => left.Equals(right);
