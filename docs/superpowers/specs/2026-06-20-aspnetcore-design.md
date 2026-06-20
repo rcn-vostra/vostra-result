@@ -61,6 +61,17 @@ public async Task<IResult> Get(int id) =>
 The collection overload accepts `Result<IEnumerable<T>>`; success status (200 vs 201) is read from the
 result's `SuccessKind` exactly like the scalar overload.
 
+**Overload resolution (must be explicit to avoid a silent mis-render).** The two overloads differ by arity
+(the `Pagination` parameter), so they are unambiguous *per call*. The intended semantics, which the docs and
+a test must pin down:
+
+- A paginated list → call the 3-arg overload; you get the §5.2 list envelope (`data` array + `pagination`).
+- A non-paginated `Result<IEnumerable<T>>` → the 2-arg scalar overload binds (with `T` = the enumerable)
+  and renders `{ operationId, data: [ … ] }` — a plain array under `data`, **no** `pagination` key. This is
+  a deliberate, valid rendering (an un-paginated list), **not** a bug.
+- There is no compile error and no accidental binding: omitting `pagination` simply means "no pagination."
+  Tests assert both shapes so the distinction stays intentional.
+
 ## 4. DI & status mapping (FR-10.2, P6)
 
 ```csharp
@@ -138,12 +149,19 @@ Status from §4 resolution. Body uses the `Microsoft.AspNetCore.Mvc.ProblemDetai
 returned via `Results.Json(problem, statusCode: status, contentType: "application/problem+json")`:
 
 ```json
-{ "status": 404, "detail": "Order 42 not found", "code": "Order.NotFound", "operationId": "00-abc…-01" }
+{ "type": "about:blank", "title": "Not Found", "status": 404,
+  "detail": "Order 42 not found", "code": "Order.NotFound", "errorType": "NotFound",
+  "operationId": "00-abc…-01" }
 ```
 
 - `detail` = `error.Message`; `status` = resolved status.
-- `code` (`error.Code`) and `operationId` go in `ProblemDetails.Extensions`.
-- `type`/`title` left at framework defaults (RFC 7807 `type` = `about:blank`).
+- `code` (`error.Code`), `errorType` (`error.Type`, enum-as-string), and `operationId` go in
+  `ProblemDetails.Extensions`.
+- **We set `type`/`title`/content-type explicitly.** Because the body is hand-serialized via `Results.Json`
+  (not `Results.Problem`/`ProblemDetailsService`), the framework does **not** populate RFC 7807 defaults:
+  `ProblemResultBuilder` sets `type` = `"about:blank"`, `title` = the reason phrase for the status, and the
+  `application/problem+json` content type itself. This is the cost of owning the exact wire shape (the
+  deliberate trade chosen over `TypedResults.Problem`).
 
 ### 5.4 Multi-error collapse, non-validation (OD-2)
 
@@ -152,11 +170,16 @@ are listed in an `errors` extension array. (The §4 status resolution runs on th
 
 ```json
 {
-  "status": 409, "detail": "Order is locked", "code": "Order.Locked", "operationId": "…",
+  "type": "about:blank", "title": "Conflict", "status": 409,
+  "detail": "Order is locked", "code": "Order.Locked", "errorType": "Conflict", "operationId": "…",
   "errors": [ { "code": "Order.Locked", "message": "Order is locked" },
               { "code": "Order.Stale",  "message": "Version mismatch" } ]
 }
 ```
+
+Note the `errors` extension is an **array of `{code,message}`** here, but an **object/map** in the
+validation case (§5.5). The two shapes are intentional; the `Testing` deserializer branches on the
+`errorType`/`status` to know which to expect.
 
 ### 5.5 Validation errors → ValidationProblemDetails (FR-11.3)
 
@@ -164,27 +187,43 @@ When **every** error in the result is `ErrorType.Validation`, render
 `Microsoft.AspNetCore.Http.HttpValidationProblemDetails` (field → messages), status 400:
 
 ```json
-{ "status": 400, "code": "General.Validation", "operationId": "…",
+{ "type": "about:blank", "title": "Bad Request", "status": 400,
+  "code": "General.Validation", "errorType": "Validation", "operationId": "…",
   "errors": { "Sku": ["required"], "Price": ["must be > 0"] } }
 ```
 
+- Rendered from a `HttpValidationProblemDetails` POCO (its `Errors` is `IDictionary<string,string[]>`),
+  populated by us and returned via `Results.Json(..., contentType: "application/problem+json")` — `type`,
+  `title`, and content-type set explicitly, exactly as §5.3.
 - **Field key convention:** `error.Metadata?["field"]` (string) if present, otherwise `error.Code`.
 - Value: the list of messages grouped under that key.
 - No change to `Core`'s `ValidationError` — the field name rides in the existing optional metadata bag.
-- A `code` extension carries the first error's code for symmetry with §5.3.
+- `code` (first error) + `errorType` = `"Validation"` extensions carry through for symmetry with §5.3.
 
 ## 6. Operation id (FR-10.3)
 
 `Activity.Current?.Id ?? http.TraceIdentifier`. No `CorrelationId` package dependency; a small internal
-helper computes it. Stamped into every success and error body as `operationId`.
+helper computes it. Stamped into every success and error body as `operationId`. (`System.Diagnostics.Activity`
+rides in the `Microsoft.AspNetCore.App` shared framework, so NFR-1 still holds — no added NuGet reference.)
 
 ## 7. Shared status↔code↔ErrorType contract (FR-11.3)
 
-The mapping that turns an `ErrorBase` into (status, code) — and its inverse used by `Testing` to pick the
-built-in `ErrorBase` subclass for a given status — is defined **once** in this package and exposed so
-`Testing` consumes it rather than re-deriving it. Concretely: the default status map (§4.1) and the
-`ErrorType` → built-in-subclass association are public (or `InternalsVisibleTo` the Testing assembly). This
-prevents the serialize (here) and deserialize (Testing) sides from drifting.
+The error envelope carries **both `code` and `errorType`** (§5.3), which is what makes typed reconstruction
+possible. The contract is defined **once** here and exposed (public, or `InternalsVisibleTo` the Testing
+assembly) so the serialize (here) and deserialize (Testing) sides cannot drift:
+
+- **Forward (here):** `ErrorBase` → (status via §4, `code`, `errorType`) on the wire.
+- **Inverse (Testing):** from the wire, `Testing` rebuilds an `ErrorBase` carrying the wire `code` and
+  `errorType`. Tests assert on **`code`** (`ShouldHaveError("Order.NotFound")`) and/or `errorType`.
+
+**Honest limit (do not over-claim):** the wire does **not** preserve the *concrete subclass*. The status
+map is many-to-one (`ConflictError` and `AlreadyExistsError` both → `ErrorType.Conflict` → 409), and a
+consumer `code` is a free string with no registered subclass. So FR-11.3 is satisfied at the granularity of
+**(`code`, `errorType`)**, not concrete CLR type. `Testing` materializes a generic `ErrorBase` (or a
+built-in subclass chosen from `errorType` where unambiguous) with the wire `code`/`errorType`/`message`;
+assertions key on `code`/`errorType`, never on `is NotFoundError`. The `errorType` → representative
+built-in subclass association (for the unambiguous types) lives in `DefaultStatusMap` and is the single
+shared source both packages consume.
 
 ## 8. File layout (one responsibility each)
 
@@ -229,14 +268,31 @@ Usage docs ship with the package, not as an afterthought:
 - `THIRD-PARTY-NOTICES.md` updated only if any code is lifted verbatim (none expected here; mapping is our
   own contribution per requirements §7).
 
+## 9b. Migration notes (call out the breaking wire changes)
+
+A mechanical swap from the legacy `AM.Extensions.AspNetCore` is **not** byte-compatible on the wire; the
+docs and `README` must state these explicitly so existing clients aren't silently broken:
+
+- **Success body drops `status`.** Legacy `{ status, operationId, data }` → new `{ operationId, data }`;
+  the status lives only on the HTTP status line. Error bodies keep `status` (RFC 7807 requires it). Any
+  client reading `response.status` on a *success* body must switch to the HTTP status code.
+- **`operationId` format changes.** Legacy used a `CorrelationId` value; this package emits a W3C trace id
+  (`00-…-01`) or `TraceIdentifier`. Same field name, different shape — note it for clients that parse it.
+- The legacy generic `ToHttpResponse<T,P>(Result<IEnumerable<T>>, P)` becomes
+  `ToHttpResponse<T>(Result<IEnumerable<T>>, Pagination)` with our own `Pagination` record (the external
+  `VolvoCars.API.Common.Models.Pagination` is not taken).
+
 ## 10. Acceptance criteria
 
 1. `result.ToHttpResponse(HttpContext)` compiles and works in both a minimal-API handler and a controller
    action with no base class (FR-10.1).
 2. A new `ErrorBase` subclass gets a correct status with **zero** edits to mapping code (FR-10.2 / §9.4).
 3. `SuccessKind.Created` yields 201, `Ok` yields 200 (FR-10.3).
-4. Errors serialize as RFC 7807 ProblemDetails carrying `code` + `operationId`; validation errors as a
+4. Errors serialize as RFC 7807 ProblemDetails carrying `code` + `errorType` + `operationId` (with `type`,
+   `title`, and `application/problem+json` content type set explicitly); validation errors as a
    field→messages map (FR-10.4).
+4a. The error wire (`code` + `errorType`) is sufficient for `Testing` to assert `ShouldHaveError(code)` /
+   by `errorType`, verified by a round-trip test in this package (FR-11.3 readiness).
 5. Per-`code` override beats per-`ErrorType` map beats default (§4 precedence), verified by test.
 6. Methods work without `AddVostraResults` (default map fallback).
 7. Package references only `Microsoft.AspNetCore.App` + Core (NFR-1).
