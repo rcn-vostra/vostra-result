@@ -3,3 +3,6 @@ obj/
 *.user
 .vs/
 artifacts/
+
+# stray test logs
+*.log
