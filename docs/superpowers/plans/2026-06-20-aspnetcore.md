@@ -24,6 +24,23 @@
 
 ---
 
+## Plan revision (2026-06-20, after Task 4)
+
+The original **Task 5 (standalone `OperationId` helper class + `InternalsVisibleTo`)** was dropped as
+over-engineering for a generic library. The operation-id *value* is still stamped on every response
+(FR-10.3) — the one line `Activity.Current?.Id ?? http.TraceIdentifier` is now a **private helper inside
+`ToHttpResponseExtensions`**, not its own public/internal class, and there is **no `InternalsVisibleTo`**.
+
+Because the only internal helpers (`ProblemResultBuilder`, the inlined operation id) are reachable through
+the public `ToHttpResponse` surface, the original **Task 6 (ProblemResultBuilder) and Task 7
+(ToHttpResponse extensions) are merged into a single revised Task 5**, tested entirely through the public
+`ToHttpResponse` API (no direct calls to internals). Tasks **8 → wire/usage**, **9 → docs**,
+**10 → final verification** are unchanged in content (their numbering is retained). The revised Task 5's
+authoritative brief is hand-authored at `.superpowers/sdd/task-5-brief.md`; the original Task 5/6/7
+sections below are superseded by it.
+
+---
+
 ### Task 1: Scaffold project, test project, solution wiring
 
 **Files:**

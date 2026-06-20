@@ -202,8 +202,8 @@ When **every** error in the result is `ErrorType.Validation`, render
 
 ## 6. Operation id (FR-10.3)
 
-`Activity.Current?.Id ?? http.TraceIdentifier`. No `CorrelationId` package dependency; a small internal
-helper computes it. Stamped into every success and error body as `operationId`. (`System.Diagnostics.Activity`
+`Activity.Current?.Id ?? http.TraceIdentifier`. No `CorrelationId` package dependency; a small private
+helper inside `ToHttpResponseExtensions` computes it (not a standalone class). Stamped into every success and error body as `operationId`. (`System.Diagnostics.Activity`
 rides in the `Microsoft.AspNetCore.App` shared framework, so NFR-1 still holds — no added NuGet reference.)
 
 ## 7. Shared status↔code↔ErrorType contract (FR-11.3)
@@ -236,7 +236,9 @@ shared source both packages consume.
 | `ProblemResultBuilder.cs` | builds the error `IResult` (ProblemDetails / ValidationProblemDetails, single + multi) |
 | `Envelopes.cs` | `SuccessEnvelope<T>`, `ListEnvelope<T>`, `Pagination` |
 | `DefaultStatusMap.cs` | built-in `ErrorType` → status defaults (§3.x) + ErrorType↔subclass association |
-| `OperationId.cs` | internal `Activity.Current?.Id ?? TraceIdentifier` helper |
+
+The operation id (§6) is a **private helper inside `ToHttpResponseExtensions`**, not a standalone class
+(dropped as over-engineering for a generic library; no `InternalsVisibleTo`).
 
 ## 9. Testing strategy
 
