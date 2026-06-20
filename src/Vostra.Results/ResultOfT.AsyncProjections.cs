@@ -22,7 +22,7 @@ public readonly partial struct Result<T>
     }
 
     /// <summary>Async TapError: runs <paramref name="action"/> on failure and returns this result unchanged.</summary>
-    public async Task<Result<T>> TapError(Func<IReadOnlyList<Error>, Task> action)
+    public async Task<Result<T>> TapError(Func<IReadOnlyList<ErrorBase>, Task> action)
     {
         if (IsError)
         {
@@ -33,7 +33,7 @@ public readonly partial struct Result<T>
     }
 
     /// <summary>Async Ensure: fails with <paramref name="error"/> when <paramref name="predicate"/> is false on a success.</summary>
-    public async Task<Result<T>> Ensure(Func<T, Task<bool>> predicate, Error error)
+    public async Task<Result<T>> Ensure(Func<T, Task<bool>> predicate, ErrorBase error)
     {
         if (IsError)
         {

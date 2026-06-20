@@ -5,15 +5,15 @@ namespace Vostra.Results;
 public readonly partial struct Result<T>
 {
     /// <summary>Runs <paramref name="onOk"/> on the value or <paramref name="onErr"/> on the errors.</summary>
-    public TOut Match<TOut>(Func<T, TOut> onOk, Func<IReadOnlyList<Error>, TOut> onErr) =>
+    public TOut Match<TOut>(Func<T, TOut> onOk, Func<IReadOnlyList<ErrorBase>, TOut> onErr) =>
         IsError ? onErr(Errors) : onOk(UnsafeValue);
 
     /// <summary>Like <see cref="Match{TOut}"/>, but the error branch receives only the first error.</summary>
-    public TOut MatchFirst<TOut>(Func<T, TOut> onOk, Func<Error, TOut> onFirstError) =>
+    public TOut MatchFirst<TOut>(Func<T, TOut> onOk, Func<ErrorBase, TOut> onFirstError) =>
         IsError ? onFirstError(FirstError) : onOk(UnsafeValue);
 
     /// <summary>Runs the matching action.</summary>
-    public void Switch(Action<T> onOk, Action<IReadOnlyList<Error>> onErr)
+    public void Switch(Action<T> onOk, Action<IReadOnlyList<ErrorBase>> onErr)
     {
         if (IsError)
         {
@@ -26,7 +26,7 @@ public readonly partial struct Result<T>
     }
 
     /// <summary>Like <see cref="Switch"/>, but the error branch receives only the first error.</summary>
-    public void SwitchFirst(Action<T> onOk, Action<Error> onFirstError)
+    public void SwitchFirst(Action<T> onOk, Action<ErrorBase> onFirstError)
     {
         if (IsError)
         {
@@ -52,7 +52,7 @@ public readonly partial struct Result<T>
     }
 
     /// <summary>Gets the errors when this is a failure.</summary>
-    public bool TryGetErrors([NotNullWhen(true)] out IReadOnlyList<Error>? errors)
+    public bool TryGetErrors([NotNullWhen(true)] out IReadOnlyList<ErrorBase>? errors)
     {
         if (IsError)
         {
@@ -68,5 +68,5 @@ public readonly partial struct Result<T>
     public T GetValueOr(T fallback) => IsSuccess ? UnsafeValue : fallback;
 
     /// <summary>Returns the value, or the result of <paramref name="fallback"/> when this is a failure.</summary>
-    public T GetValueOr(Func<IReadOnlyList<Error>, T> fallback) => IsSuccess ? UnsafeValue : fallback(Errors);
+    public T GetValueOr(Func<IReadOnlyList<ErrorBase>, T> fallback) => IsSuccess ? UnsafeValue : fallback(Errors);
 }

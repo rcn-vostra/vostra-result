@@ -6,9 +6,6 @@ namespace Vostra.Results;
 /// </summary>
 public enum ErrorType
 {
-    /// <summary>A generic failure.</summary>
-    Failure,
-
     /// <summary>An unexpected fault (e.g. wrapping an exception).</summary>
     Unexpected,
 

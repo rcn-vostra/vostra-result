@@ -36,16 +36,16 @@ public static class ResultAsyncExtensions
 
     // ---- TapError ----
     /// <summary>Async-receiver, sync side-effect.</summary>
-    public static async Task<Result<T>> TapError<T>(this Task<Result<T>> source, Action<IReadOnlyList<Error>> action) =>
+    public static async Task<Result<T>> TapError<T>(this Task<Result<T>> source, Action<IReadOnlyList<ErrorBase>> action) =>
         (await source.ConfigureAwait(false)).TapError(action);
 
     /// <summary>Async-receiver, async side-effect.</summary>
-    public static async Task<Result<T>> TapError<T>(this Task<Result<T>> source, Func<IReadOnlyList<Error>, Task> action) =>
+    public static async Task<Result<T>> TapError<T>(this Task<Result<T>> source, Func<IReadOnlyList<ErrorBase>, Task> action) =>
         await (await source.ConfigureAwait(false)).TapError(action).ConfigureAwait(false);
 
     // ---- Ensure ----
     /// <summary>Async-receiver, sync predicate, explicit error.</summary>
-    public static async Task<Result<T>> Ensure<T>(this Task<Result<T>> source, Func<T, bool> predicate, Error error) =>
+    public static async Task<Result<T>> Ensure<T>(this Task<Result<T>> source, Func<T, bool> predicate, ErrorBase error) =>
         (await source.ConfigureAwait(false)).Ensure(predicate, error);
 
     /// <summary>Async-receiver, sync predicate, validation message.</summary>
@@ -53,7 +53,7 @@ public static class ResultAsyncExtensions
         (await source.ConfigureAwait(false)).Ensure(predicate, validationMessage);
 
     /// <summary>Async-receiver, async predicate, explicit error.</summary>
-    public static async Task<Result<T>> Ensure<T>(this Task<Result<T>> source, Func<T, Task<bool>> predicate, Error error) =>
+    public static async Task<Result<T>> Ensure<T>(this Task<Result<T>> source, Func<T, Task<bool>> predicate, ErrorBase error) =>
         await (await source.ConfigureAwait(false)).Ensure(predicate, error).ConfigureAwait(false);
 
     /// <summary>Async-receiver, async predicate, validation message.</summary>
@@ -62,6 +62,6 @@ public static class ResultAsyncExtensions
 
     // ---- MapError ----
     /// <summary>Async-receiver error transform.</summary>
-    public static async Task<Result<T>> MapError<T>(this Task<Result<T>> source, Func<Error, Error> map) =>
+    public static async Task<Result<T>> MapError<T>(this Task<Result<T>> source, Func<ErrorBase, ErrorBase> map) =>
         (await source.ConfigureAwait(false)).MapError(map);
 }

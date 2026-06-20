@@ -5,10 +5,10 @@ namespace Vostra.Results;
 /// a human-readable <see cref="Message"/>, a neutral <see cref="Type"/>, and optional
 /// <see cref="CausedBy"/> / <see cref="Metadata"/>. Extend by subclassing.
 /// </summary>
-public abstract class Error : IEquatable<Error>
+public abstract class ErrorBase : IEquatable<ErrorBase>
 {
-    /// <summary>Initializes a new <see cref="Error"/>.</summary>
-    protected Error(
+    /// <summary>Initializes a new <see cref="ErrorBase"/>.</summary>
+    protected ErrorBase(
         string code,
         string message,
         ErrorType type,
@@ -38,7 +38,7 @@ public abstract class Error : IEquatable<Error>
     public IReadOnlyDictionary<string, object?>? Metadata { get; }
 
     /// <summary>Value equality on concrete type, <see cref="Type"/>, <see cref="Code"/>, and <see cref="Message"/>.</summary>
-    public bool Equals(Error? other) =>
+    public bool Equals(ErrorBase? other) =>
         other is not null
         && GetType() == other.GetType()
         && Type == other.Type
@@ -46,7 +46,7 @@ public abstract class Error : IEquatable<Error>
         && Message == other.Message;
 
     /// <inheritdoc />
-    public override bool Equals(object? obj) => Equals(obj as Error);
+    public override bool Equals(object? obj) => Equals(obj as ErrorBase);
 
     /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(GetType(), Type, Code, Message);

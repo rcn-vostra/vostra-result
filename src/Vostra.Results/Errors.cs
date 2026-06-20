@@ -1,7 +1,7 @@
 namespace Vostra.Results;
 
 /// <summary>Input failed validation.</summary>
-public sealed class ValidationError : Error
+public sealed class ValidationError : ErrorBase
 {
     /// <summary>Creates a <see cref="ValidationError"/>.</summary>
     public ValidationError(
@@ -13,7 +13,7 @@ public sealed class ValidationError : Error
 }
 
 /// <summary>A requested resource was not found.</summary>
-public sealed class NotFoundError : Error
+public sealed class NotFoundError : ErrorBase
 {
     /// <summary>Creates a <see cref="NotFoundError"/>.</summary>
     public NotFoundError(
@@ -25,7 +25,7 @@ public sealed class NotFoundError : Error
 }
 
 /// <summary>The request conflicts with current state.</summary>
-public sealed class ConflictError : Error
+public sealed class ConflictError : ErrorBase
 {
     /// <summary>Creates a <see cref="ConflictError"/>.</summary>
     public ConflictError(
@@ -37,7 +37,7 @@ public sealed class ConflictError : Error
 }
 
 /// <summary>A resource already exists (a conflict).</summary>
-public sealed class AlreadyExistsError : Error
+public sealed class AlreadyExistsError : ErrorBase
 {
     /// <summary>Creates an <see cref="AlreadyExistsError"/>.</summary>
     public AlreadyExistsError(
@@ -49,7 +49,7 @@ public sealed class AlreadyExistsError : Error
 }
 
 /// <summary>Authentication is required or failed.</summary>
-public sealed class UnauthorizedError : Error
+public sealed class UnauthorizedError : ErrorBase
 {
     /// <summary>Creates an <see cref="UnauthorizedError"/>.</summary>
     public UnauthorizedError(
@@ -61,7 +61,7 @@ public sealed class UnauthorizedError : Error
 }
 
 /// <summary>The caller is authenticated but not permitted.</summary>
-public sealed class ForbiddenError : Error
+public sealed class ForbiddenError : ErrorBase
 {
     /// <summary>Creates a <see cref="ForbiddenError"/>.</summary>
     public ForbiddenError(
@@ -72,11 +72,17 @@ public sealed class ForbiddenError : Error
         : base(code, message, ErrorType.Forbidden, causedBy, metadata) { }
 }
 
-/// <summary>An unexpected fault. Often wraps an exception via <see cref="Error.CausedBy"/>.</summary>
-public sealed class UnexpectedError : Error
+/// <summary>
+/// A general, unexpected fault (the 500-class error). Intended for boundary
+/// exception-translation (catch a throw at an HTTP/test/messaging edge and carry it
+/// via <see cref="ErrorBase.CausedBy"/>) and truly-unexpected faults — NOT a routine
+/// return from domain logic. Expected failures should use the typed kinds
+/// (<see cref="ValidationError"/>, <see cref="NotFoundError"/>, etc.) and genuine bugs should throw.
+/// </summary>
+public sealed class Error : ErrorBase
 {
-    /// <summary>Creates an <see cref="UnexpectedError"/>.</summary>
-    public UnexpectedError(
+    /// <summary>Creates an <see cref="Error"/>.</summary>
+    public Error(
         string message,
         string code = "General.Unexpected",
         Exception? causedBy = null,

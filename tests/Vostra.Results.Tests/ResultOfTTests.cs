@@ -31,7 +31,7 @@ public class ResultOfTTests
 
         result.IsError.Should().BeTrue();
         result.IsSuccess.Should().BeFalse();
-        result.FirstError.Should().BeOfType<UnexpectedError>();
+        result.FirstError.Should().BeOfType<Error>();
         result.FirstError.Code.Should().Be("Result.Uninitialized");
     }
 
@@ -58,13 +58,13 @@ public class ResultOfTTests
     public void ToString_distinguishes_success_and_error()
     {
         Produce(true).ToString().Should().Contain("Success");
-        Produce(false).ToString().Should().Contain("Error");
+        Produce(false).ToString().Should().Contain("ErrorBase");
     }
 
     [Fact]
     public void Error_array_converts_implicitly_to_failure()
     {
-        Result<int> result = new Error[] { new NotFoundError("a"), new ConflictError("b") };
+        Result<int> result = new ErrorBase[] { new NotFoundError("a"), new ConflictError("b") };
 
         result.IsError.Should().BeTrue();
         result.Errors.Should().HaveCount(2);
@@ -73,7 +73,7 @@ public class ResultOfTTests
     [Fact]
     public void Error_list_converts_implicitly_to_failure()
     {
-        Result<int> result = new List<Error> { new ValidationError("a") };
+        Result<int> result = new List<ErrorBase> { new ValidationError("a") };
 
         result.IsError.Should().BeTrue();
         result.FirstError.Should().BeOfType<ValidationError>();

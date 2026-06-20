@@ -17,8 +17,8 @@ public class ErrorTests
     [Fact]
     public void Errors_of_same_type_code_and_message_are_equal()
     {
-        Error a = new NotFoundError("missing", code: "Order.NotFound");
-        Error b = new NotFoundError("missing", code: "Order.NotFound");
+        ErrorBase a = new NotFoundError("missing", code: "Order.NotFound");
+        ErrorBase b = new NotFoundError("missing", code: "Order.NotFound");
 
         a.Should().Be(b);
         a.GetHashCode().Should().Be(b.GetHashCode());
@@ -27,8 +27,8 @@ public class ErrorTests
     [Fact]
     public void Errors_of_different_subtype_are_not_equal()
     {
-        Error a = new NotFoundError("x", code: "Same");
-        Error b = new ConflictError("x", code: "Same");
+        ErrorBase a = new NotFoundError("x", code: "Same");
+        ErrorBase b = new ConflictError("x", code: "Same");
 
         a.Should().NotBe(b);
     }
@@ -39,7 +39,7 @@ public class ErrorTests
         var ex = new InvalidOperationException("boom");
         var meta = new Dictionary<string, object?> { ["orderId"] = 5 };
 
-        var error = new UnexpectedError("failed", causedBy: ex, metadata: meta);
+        var error = new Error("failed", causedBy: ex, metadata: meta);
 
         error.CausedBy.Should().BeSameAs(ex);
         error.Metadata.Should().ContainKey("orderId");

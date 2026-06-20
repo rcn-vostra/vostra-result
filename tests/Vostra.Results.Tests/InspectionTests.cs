@@ -28,7 +28,7 @@ public class InspectionTests
     [Fact]
     public void MatchFirst_passes_the_first_error()
     {
-        var type = Find(2).MatchFirst(_ => ErrorType.Failure, e => e.Type);
+        var type = Find(2).MatchFirst(_ => ErrorType.Unexpected, e => e.Type);
 
         type.Should().Be(ErrorType.NotFound);
     }

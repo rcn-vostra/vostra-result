@@ -22,7 +22,7 @@ public readonly partial struct Result<T>
     }
 
     /// <summary>Runs <paramref name="action"/> on failure and returns this result unchanged.</summary>
-    public Result<T> TapError(Action<IReadOnlyList<Error>> action)
+    public Result<T> TapError(Action<IReadOnlyList<ErrorBase>> action)
     {
         if (IsError)
         {
@@ -33,7 +33,7 @@ public readonly partial struct Result<T>
     }
 
     /// <summary>Fails with <paramref name="error"/> when <paramref name="predicate"/> is false on a success.</summary>
-    public Result<T> Ensure(Func<T, bool> predicate, Error error) =>
+    public Result<T> Ensure(Func<T, bool> predicate, ErrorBase error) =>
         IsError ? this : (predicate(UnsafeValue) ? this : Result<T>.Err(new[] { error }));
 
     /// <summary>Fails with a <see cref="ValidationError"/> when <paramref name="predicate"/> is false (FR-5.4).</summary>
@@ -41,6 +41,6 @@ public readonly partial struct Result<T>
         Ensure(predicate, new ValidationError(validationMessage));
 
     /// <summary>Transforms each error with <paramref name="map"/>; passes successes through.</summary>
-    public Result<T> MapError(Func<Error, Error> map) =>
+    public Result<T> MapError(Func<ErrorBase, ErrorBase> map) =>
         IsSuccess ? this : Result<T>.Err(Array.ConvertAll(ErrorArray, e => map(e)));
 }
