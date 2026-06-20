@@ -23,7 +23,7 @@ Decisions: **FIX** = do it in the Core v1.1 pass before AspNetCore. **DEFER** = 
 ## DROP / DEFER (recorded)
 | # | Item | Decision |
 |---|------|----------|
-| 10 | OD-3 early-exit `Scope`/`OrReturn` | **DROP** — poor ROI; LINQ `from…from…` already covers P5. Document LINQ as the answer. |
+| 10 | OD-3 early-exit `Scope`/`OrReturn` | **DEFER** (revisit after Testing). Purely additive — adding it later breaks nothing. LINQ `from…from…` + `Then` already cover P5; revisit only if porting the reference repo's complex service methods proves awkward. If built: opt-in, documented (no hot loops), possibly a separate add-on. |
 | 11 | OD-5 serializer default | **DECIDED: System.Text.Json** (Newtonsoft optional in Testing). |
 | 12 | OD-6 retire old AM.Extensions | **DEFER** — retire, but only after AspNetCore+Testing exist and reference integration tests pass (last migration gate). |
 | 13 | ValueTask async matrix (FR-6.1) | **DEFER** — Task-only matrix is enough; ValueTask is a perf refinement. |
