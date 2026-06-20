@@ -2,6 +2,11 @@
 
 **Date:** 2026-06-19 · **Status:** Approved (brainstorming) · **Scope:** `Core` package only.
 
+> **Superseded in part by Core v1.1** (`2026-06-20-core-v1.1-design.md`): the abstract base was renamed
+> `Error → ErrorBase`, the concrete `UnexpectedError → Error`, `ErrorType.Failure` was dropped, and a
+> `SuccessKind {Ok, Created}` + `Result.Created` were added. This document reflects those renames inline;
+> any remaining bare `Error` in prose referring to the base type means `ErrorBase`.
+
 Source requirements: [result-type-requirements.md](../../../cc/docs/requirements/result-type-requirements.md).
 This spec covers the **`Core`** package only; `AspNetCore` and `Testing` get their own spec → plan → build
 cycles afterward (build order `Core → AspNetCore → Testing`).
@@ -40,7 +45,7 @@ lands with `AspNetCore`). All HTTP status mapping is out of `Core` entirely.
 - `bool IsSuccess` / `bool IsError`. **No public `Value`** (FR-1.3, kills P1/`default!`).
 - Value access only via FR-4 members (below).
 - Value-based equality and `ToString()` (FR-1.4).
-- **`default(Result<T>)` is treated as a faulted result** — it yields a synthetic `UnexpectedError`
+- **`default(Result<T>)` is treated as a faulted result** — it yields a synthetic `Error`
   ("uninitialized result"), never a success carrying `default(T)`. Deliberate improvement over ErrorOr,
   whose `default` is a silent success. (`_initialized == false ⇒ IsError`.)
 
@@ -56,7 +61,7 @@ lands with `AspNetCore`). All HTTP status mapping is out of `Core` entirely.
 ## 5. Error model (FR-2)
 
 ```
-abstract Error {
+abstract ErrorBase {
     string  Code;          // stable identity, e.g. "Order.NotFound"
     string  Message;
     ErrorType Type;        // neutral taxonomy (NOT http)
@@ -68,12 +73,12 @@ abstract Error {
   ├ ConflictError      (ErrorType.Conflict)   ├ AlreadyExistsError (ErrorType.Conflict)
   ├ UnauthorizedError  (ErrorType.Unauthorized)
   ├ ForbiddenError     (ErrorType.Forbidden)
-  └ UnexpectedError    (ErrorType.Unexpected)
+  └ Error              (ErrorType.Unexpected)  // general / unexpected 500-kind (edge-only)
 ```
 
-`enum ErrorType { Validation, NotFound, Conflict, Unauthorized, Forbidden, Unexpected, Failure }`.
+`enum ErrorType { Validation, NotFound, Conflict, Unauthorized, Forbidden, Unexpected }`.
 
-- Consumers extend by subclassing `Error` and choosing a `Type` (FR-2.2 extensibility).
+- Consumers extend by subclassing `ErrorBase` and choosing a `Type` (FR-2.2 extensibility).
 - Value equality on concrete type + `Code` + `Type` + `Message`. `CausedBy` and `Metadata` are intentionally
   excluded from equality so tests can assert error **identity** (FR-1.4 / FR-11.3) regardless of the wrapped
   exception or bag.
