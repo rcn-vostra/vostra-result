@@ -1,0 +1,72 @@
+using System.Diagnostics.CodeAnalysis;
+
+namespace Vostra.Results;
+
+public readonly partial struct Result<T>
+{
+    /// <summary>Runs <paramref name="onOk"/> on the value or <paramref name="onErr"/> on the errors.</summary>
+    public TOut Match<TOut>(Func<T, TOut> onOk, Func<IReadOnlyList<Error>, TOut> onErr) =>
+        IsError ? onErr(Errors) : onOk(UnsafeValue);
+
+    /// <summary>Like <see cref="Match{TOut}"/>, but the error branch receives only the first error.</summary>
+    public TOut MatchFirst<TOut>(Func<T, TOut> onOk, Func<Error, TOut> onFirstError) =>
+        IsError ? onFirstError(FirstError) : onOk(UnsafeValue);
+
+    /// <summary>Runs the matching action.</summary>
+    public void Switch(Action<T> onOk, Action<IReadOnlyList<Error>> onErr)
+    {
+        if (IsError)
+        {
+            onErr(Errors);
+        }
+        else
+        {
+            onOk(UnsafeValue);
+        }
+    }
+
+    /// <summary>Like <see cref="Switch"/>, but the error branch receives only the first error.</summary>
+    public void SwitchFirst(Action<T> onOk, Action<Error> onFirstError)
+    {
+        if (IsError)
+        {
+            onFirstError(FirstError);
+        }
+        else
+        {
+            onOk(UnsafeValue);
+        }
+    }
+
+    /// <summary>Gets the value when this is a success.</summary>
+    public bool TryGetValue([MaybeNullWhen(false)] out T value)
+    {
+        if (IsSuccess)
+        {
+            value = UnsafeValue;
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
+
+    /// <summary>Gets the errors when this is a failure.</summary>
+    public bool TryGetErrors([NotNullWhen(true)] out IReadOnlyList<Error>? errors)
+    {
+        if (IsError)
+        {
+            errors = Errors;
+            return true;
+        }
+
+        errors = null;
+        return false;
+    }
+
+    /// <summary>Returns the value, or <paramref name="fallback"/> when this is a failure.</summary>
+    public T GetValueOr(T fallback) => IsSuccess ? UnsafeValue : fallback;
+
+    /// <summary>Returns the value, or the result of <paramref name="fallback"/> when this is a failure.</summary>
+    public T GetValueOr(Func<IReadOnlyList<Error>, T> fallback) => IsSuccess ? UnsafeValue : fallback(Errors);
+}

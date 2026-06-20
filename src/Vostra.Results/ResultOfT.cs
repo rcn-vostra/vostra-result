@@ -5,7 +5,7 @@ namespace Vostra.Results;
 /// The success path does not allocate. There is no public Value — consume via
 /// Match, Switch, or the TryGet members (added in later tasks).
 /// </summary>
-public readonly struct Result<T> : IEquatable<Result<T>>
+public readonly partial struct Result<T> : IEquatable<Result<T>>
 {
     private readonly T? _value;
     private readonly Error[]? _errors;
