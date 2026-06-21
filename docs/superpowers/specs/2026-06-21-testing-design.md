@@ -35,8 +35,8 @@ the **typed error identity survive the round-trip** — a test asserts `ShouldHa
 - **Runtime dependency:** `Vostra.Results.AspNetCore` (which transitively brings Core **and** the
   `Microsoft.AspNetCore.App` shared framework). `System.Text.Json` is in-box. **No** assertion library,
   **no** Newtonsoft.
-- **This intentionally amends NFR-1** ("Testing: only the serializer + assertions lib"). Rationale: this
-  package exists *only* to test an API built with `Vostra.Results.AspNetCore`; it parses that package's exact
+- **NFR-1's Testing dependency clause was removed** (requirements §6, 2026-06-21) in favor of this design.
+  Rationale: this package exists *only* to test an API built with `Vostra.Results.AspNetCore`; it parses that package's exact
   response contract (envelopes + `problem+json`). So it is already 100% coupled to that contract — the only
   question is whether the coupling is *honest* (reference the package, reuse the real types) or *hidden* (copy
   the DTOs and risk drift). Referencing directly reuses the real `SuccessEnvelope<T>`/`ListEnvelope<T>`/
@@ -142,7 +142,9 @@ Single seam carries **both** "which serializer" and "which envelope shape" (FR-1
 
 **`ReadData<T>`** — deserializes the **reused** `Vostra.Results.AspNetCore.SuccessEnvelope<T>.data` (scalar) /
 `ListEnvelope<T>` (list) — the exact types the server emits, so the round-trip cannot drift. The valueless
-path (`SuccessNoDataEnvelope`) is handled by the non-generic client method and does **not** read `data`.
+(non-generic) success path does **not** deserialize an envelope type at all: it confirms the 2xx status and
+returns `Result.Success`/`Result.Created()` (optionally reading `operationId` via a tiny local shape). This
+sidesteps the fact that `SuccessNoDataEnvelope` is `internal` in AspNetCore — no need to make it public.
 
 **S7 strict-deserialization guard** — `UnmappedMemberHandling.Disallow` scoped to the **payload `T`** (not the
 envelope, which must stay tolerant to future fields). On the STJ "member not found" failure, rethrow with the

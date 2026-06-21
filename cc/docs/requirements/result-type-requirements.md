@@ -202,7 +202,14 @@ can name as we like (`Result<T>`, namespace e.g. `Vostra.Results`).
 ## 6. Non-Functional Requirements
 
 - **NFR-1 — Dependencies.** Core: **zero** runtime NuGet dependencies. AspNetCore: only ASP.NET Core
-  abstractions. Testing: only the chosen serializer + an assertions lib.
+  abstractions.
+  <!-- The original "Testing: only the chosen serializer + an assertions lib" clause was REMOVED on
+       2026-06-21. The Testing package is an ASP.NET-Core-specific test client that parses the exact response
+       contract emitted by Vostra.Results.AspNetCore, so it depends on that package directly (reusing the real
+       envelopes/Pagination — zero duplication/drift). The shared framework it inherits ships with the .NET SDK
+       and every real consumer already has it via WebApplicationFactory. See the Testing design spec §2
+       (docs/superpowers/specs/2026-06-21-testing-design.md) for the full rationale and the B-fallback. -->
+  Testing's dependencies are defined by that package's design spec, not constrained here.
 - **NFR-2 — Allocation.** Success path zero-alloc (`readonly struct`); error path allocates only the
   error(s). Benchmarked with BenchmarkDotNet; a happy-path `Then` chain MUST not allocate.
 - **NFR-3 — Target frameworks.** `net8.0` and `net9.0` (matches reference repo, which multi-targets).
