@@ -5,7 +5,8 @@ A lean, async-friendly, dependency-free `Result<T>` type for .NET — plus ASP.N
 ## 📖 [Usage Guide](docs/usage.md)
 
 Start here — a short, example-first walkthrough of all three packages (returning results, `Match`/`Then`/LINQ,
-async chaining, HTTP mapping, and typed-error integration testing incl. chaining dependent requests).
+async chaining, multi-success unions `Result<T1,T2[,T3]>`, HTTP mapping, and typed-error integration testing
+incl. chaining dependent requests).
 
 ## Vostra.Results
 

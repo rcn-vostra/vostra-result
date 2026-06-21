@@ -113,6 +113,55 @@ return order;                  // success (Ok)
 return Result.Created(order);  // success (Created) — maps to HTTP 201 later
 ```
 
+### One of several success shapes — `Result<T1,T2>` / `Result<T1,T2,T3>`
+
+Sometimes an operation succeeds as *one of several distinct value types* — not "a value or an error", but
+"**this** value, or **that** value, or an error". Reach for the multi-success overloads instead of a shared
+base type or an `object`:
+
+```csharp
+public Result<Pdf, Html> Render(Doc doc) =>
+    doc.PrefersPrint
+        ? RenderPdf(doc)                                 // T1   -> success (arm 1)
+        : RenderHtml(doc);                               // T2   -> success (arm 2)
+        // return new NotFoundError($"doc {doc.Id}");    // Error -> failure, same channel as Result<T>
+```
+
+Each arm and the error channel convert implicitly — no factories. Consume by matching **every** arm
+exhaustively (the error branch is always present and always receives the full error list):
+
+```csharp
+IResult response = Render(doc).Match(
+    pdf  => Results.File(pdf.Bytes, "application/pdf"),
+    html => Results.Content(html.Markup, "text/html"),
+    errs => Results.Problem(errs[0].Message));
+
+Render(doc).Switch(                                      // void counterpart
+    pdf  => _sink.Write(pdf),
+    html => _sink.Write(html),
+    errs => _log.Warn(errs[0].Message));
+
+int active = Render(doc).Index;                          // 1 or 2 on success; 0 when faulted
+```
+
+`Result<T1,T2,T3>` is the same with a third arm. Both are `readonly struct`s with the same zero-allocation,
+no-`.Value`-footgun, `default`-is-faulted discipline as `Result<T>`; value-type arms don't box.
+
+**It's a terminal match surface, by design.** You *produce* one (return it) and *match out* of it — there
+is intentionally no `Map`/`Then`/LINQ *through* a union (which arm would it transform?). Chain into the
+union with `Result<T>` combinators, then `Match` at the boundary.
+
+When two arms share a type, implicit conversion is ambiguous — select the arm explicitly:
+
+```csharp
+Result<int, int> a = Result<int, int>.First(0);    // arm 1
+Result<int, int> b = Result<int, int>.Second(0);   // arm 2  (a != b)
+```
+
+> The error channel is identical to `Result<T>`, so a union flows through an ASP.NET Core endpoint today
+> via `Match` (map each success arm to a response yourself). Dedicated `ToHttpResponse`/testing support for
+> unions is intentionally deferred — see the design spec.
+
 ---
 
 ## 2. Vostra.Results.AspNetCore — `Result` → HTTP
