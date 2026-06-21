@@ -80,8 +80,11 @@ already owns `ErrorBase`).
 - Faulted (including `default` and explicitly-faulted) invokes `onErr` with `Errors` (never null/empty —
   uninitialized yields the sentinel list, exactly as `Result<T>`).
 - `Match`/`Switch` never return `default!` and never expose an invalid value — DP3 preserved.
-- A `null` delegate for the active arm throws `ArgumentNullException` (fail fast; OneOf throws
-  `InvalidOperationException` but `ArgumentNullException` is the more accurate .NET idiom).
+- Delegates are **not** null-checked, matching the established library-wide convention (`Map`/`Then`/
+  `Tap`/`Ensure`/`MapError`/LINQ/async all invoke their delegate directly). A `null` delegate is a
+  programmer error that surfaces as a `NullReferenceException` on use, consistently with the rest of the
+  surface. (Adding null validation is a separate, library-wide decision — see the rejected harmonization
+  in this branch's history.)
 
 ## 6. Equality / hashing / ToString
 
@@ -105,7 +108,6 @@ Per arity, mirroring `ResultOfTTests` style:
 - `ErrorBase` / `ErrorBase[]` / `List<ErrorBase>` convert to failure.
 - `default(Result<…>)` is faulted with `Result.Uninitialized` code (not a success).
 - `Match` routes to the correct arm; `Switch` invokes the correct action; error arm receives full `Errors`.
-- Null delegate for the active arm throws `ArgumentNullException`.
 - Equality: same-arm equal values equal; different arms / different values not equal; equal failures equal.
 - `ToString` distinguishes success vs error.
 - (Allocation sanity for the value-type success path is covered by the existing NFR-2 approach; not a new bench in this branch.)

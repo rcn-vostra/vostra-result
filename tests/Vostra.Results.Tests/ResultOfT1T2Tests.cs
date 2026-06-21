@@ -88,14 +88,6 @@ public class ResultOfT1T2Tests
     }
 
     [Fact]
-    public void Match_with_null_delegate_for_active_arm_throws()
-    {
-        Func<string, string> onT2 = null!;
-        var act = () => Produce(2).Match(i => "int", onT2, e => "err");
-        act.Should().Throw<ArgumentNullException>();
-    }
-
-    [Fact]
     public void Same_arm_equal_values_are_equal()
     {
         Result<int, string> a = 7;
@@ -136,14 +128,6 @@ public class ResultOfT1T2Tests
         Result<int, string> e1 = new NotFoundError("x", code: "C");
         Result<int, string> e2 = new NotFoundError("x", code: "C");
         e1.GetHashCode().Should().Be(e2.GetHashCode());
-    }
-
-    [Fact]
-    public void Switch_with_null_delegate_for_active_arm_throws()
-    {
-        Action<string> onT2 = null!;
-        var act = () => Produce(2).Switch(i => { }, onT2, e => { });
-        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]

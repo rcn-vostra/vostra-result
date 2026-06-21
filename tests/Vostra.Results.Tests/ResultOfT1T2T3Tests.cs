@@ -69,14 +69,6 @@ public class ResultOfT1T2T3Tests
     }
 
     [Fact]
-    public void Match_with_null_delegate_for_active_arm_throws()
-    {
-        Func<bool, string> onT3 = null!;
-        var act = () => Produce(3).Match(i => "int", s => "str", onT3, e => "err");
-        act.Should().Throw<ArgumentNullException>();
-    }
-
-    [Fact]
     public void Explicit_arm_factories_disambiguate_same_typed_arms()
     {
         Result<int, int, int> a = Result<int, int, int>.First(0);
@@ -119,14 +111,6 @@ public class ResultOfT1T2T3Tests
         result.Index.Should().Be(2);
         var act = () => result.GetHashCode();
         act.Should().NotThrow();
-    }
-
-    [Fact]
-    public void Switch_with_null_delegate_for_active_arm_throws()
-    {
-        Action<bool> onT3 = null!;
-        var act = () => Produce(3).Switch(i => { }, s => { }, onT3, e => { });
-        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]

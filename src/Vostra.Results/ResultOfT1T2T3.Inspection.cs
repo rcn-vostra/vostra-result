@@ -11,22 +11,15 @@ public readonly partial struct Result<T1, T2, T3>
     {
         if (IsError)
         {
-            ArgumentNullException.ThrowIfNull(onErr);
             return onErr(Errors);
         }
 
-        switch (_index)
+        return _index switch
         {
-            case 1:
-                ArgumentNullException.ThrowIfNull(onT1);
-                return onT1(_value1!);
-            case 2:
-                ArgumentNullException.ThrowIfNull(onT2);
-                return onT2(_value2!);
-            default:
-                ArgumentNullException.ThrowIfNull(onT3);
-                return onT3(_value3!);
-        }
+            1 => onT1(_value1!),
+            2 => onT2(_value2!),
+            _ => onT3(_value3!),
+        };
     }
 
     /// <summary>Runs the action matching the active arm, or <paramref name="onErr"/> on the errors.</summary>
@@ -38,7 +31,6 @@ public readonly partial struct Result<T1, T2, T3>
     {
         if (IsError)
         {
-            ArgumentNullException.ThrowIfNull(onErr);
             onErr(Errors);
             return;
         }
@@ -46,15 +38,12 @@ public readonly partial struct Result<T1, T2, T3>
         switch (_index)
         {
             case 1:
-                ArgumentNullException.ThrowIfNull(onT1);
                 onT1(_value1!);
                 return;
             case 2:
-                ArgumentNullException.ThrowIfNull(onT2);
                 onT2(_value2!);
                 return;
             default:
-                ArgumentNullException.ThrowIfNull(onT3);
                 onT3(_value3!);
                 return;
         }
