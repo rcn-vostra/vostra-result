@@ -93,7 +93,7 @@ public static class ResultAssertions
     {
         if (!isError)
         {
-            throw Fail($"Expected an {expectation}, but the result was successful.", errors);
+            throw FailHeadlineOnly($"Expected an {expectation}, but the result was successful.");
         }
 
         if (!errors.Any(predicate))
@@ -104,6 +104,9 @@ public static class ResultAssertions
 
     private static VostraAssertionException Fail(string headline, IReadOnlyList<ErrorBase> errors) =>
         new(headline + Environment.NewLine + Describe(errors));
+
+    private static VostraAssertionException FailHeadlineOnly(string headline) =>
+        new(headline);
 
     /// <summary>Composes the rich diagnostic: each error's identity plus any attached request context.</summary>
     internal static string Describe(IReadOnlyList<ErrorBase> errors)

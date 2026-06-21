@@ -43,6 +43,28 @@ public class ResultAssertionsTests
     }
 
     [Fact]
+    public void ShouldHaveError_by_code_throws_on_success_without_no_errors_suffix()
+    {
+        Result<int> ok = 1;
+
+        var act = () => ok.ShouldHaveError("Some.Code");
+
+        act.Should().Throw<VostraAssertionException>()
+            .WithMessage("*successful*")
+            .And.Message.Should().NotContain("(no errors)");
+    }
+
+    [Fact]
+    public void ShouldHaveError_by_type_throws_on_success()
+    {
+        Result<int> ok = 1;
+
+        var act = () => ok.ShouldHaveError(ErrorType.NotFound);
+
+        act.Should().Throw<VostraAssertionException>();
+    }
+
+    [Fact]
     public void ShouldHaveError_by_type_passes()
     {
         Result<int> result = new NotFoundError("nope", "X.NotFound");
