@@ -41,7 +41,7 @@ public sealed class TestHttpClient
 
         var page = await _format.ReadList<T>(response, ct).ConfigureAwait(false);
         return page is null
-            ? (ErrorBase)new Error($"GET {Combine(url)} returned no list payload", "Http.NullResponse")
+            ? AttachRequest(NullPayload($"GET {Combine(url)} returned no list payload"), HttpMethod.Get, url, body: null)
             : page;
     }
 
@@ -89,7 +89,7 @@ public sealed class TestHttpClient
         var data = await _format.ReadData<T>(response, ct).ConfigureAwait(false);
         if (data is null)
         {
-            return (ErrorBase)new Error($"{method.Method} {Combine(url)} returned null data", "Http.NullResponse");
+            return AttachRequest(NullPayload($"{method.Method} {Combine(url)} returned null data"), method, url, body);
         }
 
         return response.StatusCode == HttpStatusCode.Created ? Result.Created(data) : data;
@@ -110,6 +110,9 @@ public sealed class TestHttpClient
 
     private Result<T> Fail<T>(IReadOnlyList<ErrorBase> errors, HttpMethod method, string url, object? body) =>
         AttachRequest(errors, method, url, body);
+
+    private static ErrorBase[] NullPayload(string message) =>
+        new ErrorBase[] { new Error(message, "Http.NullResponse") };
 
     private ErrorBase[] AttachRequest(IReadOnlyList<ErrorBase> errors, HttpMethod method, string url, object? body)
     {

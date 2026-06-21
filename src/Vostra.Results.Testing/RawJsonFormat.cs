@@ -16,12 +16,26 @@ public sealed class RawJsonFormat : IResultRawFormat
     private const string MappingHint =
         " — MAKE SURE YOU HAVE MAPPED TO THE CORRECT RESPONSE OBJECT (THAT CONTROLLER RESPONDS WITH)";
 
-    private static readonly JsonSerializerOptions Tolerant = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions Tolerant = CreateTolerant();
 
-    private static readonly JsonSerializerOptions Strict = new(JsonSerializerDefaults.Web)
+    private static readonly JsonSerializerOptions Strict = CreateStrict();
+
+    private static JsonSerializerOptions CreateTolerant()
     {
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-    };
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        options.MakeReadOnly(populateMissingResolver: true);
+        return options;
+    }
+
+    private static JsonSerializerOptions CreateStrict()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        };
+        options.MakeReadOnly(populateMissingResolver: true);
+        return options;
+    }
 
     /// <summary>A shared, stateless default instance.</summary>
     public static RawJsonFormat Instance { get; } = new();
@@ -75,12 +89,12 @@ public sealed class RawJsonFormat : IResultRawFormat
 
         if (body.Length == 0)
         {
-            return new ErrorBase[] { new Error($"HTTP {status} {response.ReasonPhrase}".Trim(), "Http.Error") };
+            return HttpError($"HTTP {status} {response.ReasonPhrase}".Trim(), status);
         }
 
         if (body[0] != '{' && body[0] != '[')
         {
-            return new ErrorBase[] { new Error(body, "Http.Error") };
+            return HttpError(body, status);
         }
 
         try
@@ -90,9 +104,12 @@ public sealed class RawJsonFormat : IResultRawFormat
         }
         catch (JsonException)
         {
-            return new ErrorBase[] { new Error(body, "Http.Error") };
+            return HttpError(body, status);
         }
     }
+
+    private static ErrorBase[] HttpError(string message, int status) =>
+        new ErrorBase[] { new Error(message, "Http.Error", metadata: new Dictionary<string, object?> { ["status"] = status }) };
 
     private static T? Deserialize<T>(JsonElement element)
     {

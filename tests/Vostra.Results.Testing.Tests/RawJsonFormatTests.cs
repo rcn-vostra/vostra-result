@@ -88,7 +88,7 @@ public class RawJsonFormatTests
     [Fact]
     public void SerializeRequest_produces_json_content()
     {
-        var content = RawJsonFormat.Instance.SerializeRequest(new Product(1, "a"));
+        using var content = RawJsonFormat.Instance.SerializeRequest(new Product(1, "a"));
 
         content.Headers.ContentType!.MediaType.Should().Be("application/json");
     }

@@ -140,4 +140,21 @@ public class TestHttpClientTests
         page!.Items.Should().HaveCount(2);
         page.Pagination.TotalCount.Should().Be(2);
     }
+
+    [Fact]
+    public async Task Success_with_null_payload_returns_error_with_request_context()
+    {
+        // A 2xx response whose payload deserializes to null still yields an error result —
+        // and that error must carry the request context like every other failure path.
+        var fakeFormat = new FakeRawFormat(Array.Empty<ErrorBase>());
+        var http = StubHttpMessageHandler.Client(HttpStatusCode.OK, """{ "data": null }""");
+        var api = new TestHttpClient(http, "products", fakeFormat);
+
+        var result = await api.Get<Product>("/7");
+
+        result.IsError.Should().BeTrue();
+        result.FirstError.Code.Should().Be("Http.NullResponse");
+        result.FirstError.Metadata.Should().ContainKey("request");
+        ((RequestContext)result.FirstError.Metadata!["request"]!).Url.Should().Be("products/7");
+    }
 }

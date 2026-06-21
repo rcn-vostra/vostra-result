@@ -83,6 +83,30 @@ public class ProblemDetailsErrorReaderTests
     }
 
     [Fact]
+    public void Single_error_carries_http_status_in_metadata()
+    {
+        var json = """{ "status":404, "detail":"gone", "code":"X.NotFound", "errorType":"NotFound" }""";
+
+        var errors = ProblemDetailsErrorReader.Read(Parse(json), 404);
+
+        errors[0].Metadata!["status"].Should().Be(404);
+    }
+
+    [Fact]
+    public void Validation_errors_carry_both_field_and_status_metadata()
+    {
+        var json = """
+        { "status":400, "errors": { "name":["Required."] },
+          "code":"General.Validation", "errorType":"Validation" }
+        """;
+
+        var errors = ProblemDetailsErrorReader.Read(Parse(json), 400);
+
+        errors[0].Metadata!["field"].Should().Be("name");
+        errors[0].Metadata!["status"].Should().Be(400);
+    }
+
+    [Fact]
     public void Missing_code_defaults_and_uses_title_when_no_detail()
     {
         var json = """{ "status":500, "title":"Internal Server Error" }""";

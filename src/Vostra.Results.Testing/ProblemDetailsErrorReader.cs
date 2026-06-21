@@ -35,8 +35,8 @@ public static class ProblemDetailsErrorReader
 
                 foreach (var message in field.Value.EnumerateArray())
                 {
-                    var metadata = new Dictionary<string, object?> { ["field"] = field.Name };
-                    validation.Add(new ValidationError(message.GetString() ?? string.Empty, code, metadata: metadata));
+                    var extra = new Dictionary<string, object?> { ["field"] = field.Name };
+                    validation.Add(Create(ErrorType.Validation, code, message.GetString() ?? string.Empty, statusCode, extra));
                 }
             }
 
@@ -53,7 +53,7 @@ public static class ProblemDetailsErrorReader
             {
                 var entryCode = GetString(entry, "code") ?? code;
                 var entryMessage = GetString(entry, "message") ?? detail;
-                many.Add(Create(type, entryCode, entryMessage));
+                many.Add(Create(type, entryCode, entryMessage, statusCode));
             }
 
             if (many.Count > 0)
@@ -62,18 +62,35 @@ public static class ProblemDetailsErrorReader
             }
         }
 
-        return new[] { Create(type, code, detail) };
+        return new[] { Create(type, code, detail, statusCode) };
     }
 
-    private static ErrorBase Create(ErrorType type, string code, string message) => type switch
+    private static ErrorBase Create(
+        ErrorType type,
+        string code,
+        string message,
+        int statusCode,
+        IReadOnlyDictionary<string, object?>? extra = null)
     {
-        ErrorType.Validation => new ValidationError(message, code),
-        ErrorType.NotFound => new NotFoundError(message, code),
-        ErrorType.Conflict => new ConflictError(message, code),
-        ErrorType.Unauthorized => new UnauthorizedError(message, code),
-        ErrorType.Forbidden => new ForbiddenError(message, code),
-        _ => new Error(message, code),
-    };
+        var metadata = new Dictionary<string, object?> { ["status"] = statusCode };
+        if (extra is not null)
+        {
+            foreach (var pair in extra)
+            {
+                metadata[pair.Key] = pair.Value;
+            }
+        }
+
+        return type switch
+        {
+            ErrorType.Validation => new ValidationError(message, code, metadata: metadata),
+            ErrorType.NotFound => new NotFoundError(message, code, metadata: metadata),
+            ErrorType.Conflict => new ConflictError(message, code, metadata: metadata),
+            ErrorType.Unauthorized => new UnauthorizedError(message, code, metadata: metadata),
+            ErrorType.Forbidden => new ForbiddenError(message, code, metadata: metadata),
+            _ => new Error(message, code, metadata: metadata),
+        };
+    }
 
     private static ErrorType ParseType(string? text) =>
         Enum.TryParse<ErrorType>(text, ignoreCase: true, out var parsed) ? parsed : ErrorType.Unexpected;
