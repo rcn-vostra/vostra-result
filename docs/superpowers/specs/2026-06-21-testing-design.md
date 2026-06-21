@@ -32,11 +32,23 @@ the **typed error identity survive the round-trip** — a test asserts `ShouldHa
 
 - New project `src/Vostra.Results.Testing/Vostra.Results.Testing.csproj`, TFMs **`net8.0;net9.0`** (parity with
   Core/AspNetCore; a repo-wide `net10.0` bump is a separate decision — the .NET 10 SDK is now installed).
-- **Runtime dependencies:** `Vostra.Results` (Core) only. `System.Text.Json` is in-box. **No** AspNetCore
-  reference, **no** assertion library, **no** Newtonsoft. Satisfies **NFR-1**.
-- Test project `tests/Vostra.Results.Testing.Tests` references `Microsoft.AspNetCore.Mvc.Testing` **and**
-  `Vostra.Results.AspNetCore` — **test-only**, to prove the real Core→AspNetCore→Testing round-trip (§9).
-- No `InternalsVisibleTo`; the package uses Core's public surface only (consistent with the AspNetCore package).
+- **Runtime dependency:** `Vostra.Results.AspNetCore` (which transitively brings Core **and** the
+  `Microsoft.AspNetCore.App` shared framework). `System.Text.Json` is in-box. **No** assertion library,
+  **no** Newtonsoft.
+- **This intentionally amends NFR-1** ("Testing: only the serializer + assertions lib"). Rationale: this
+  package exists *only* to test an API built with `Vostra.Results.AspNetCore`; it parses that package's exact
+  response contract (envelopes + `problem+json`). So it is already 100% coupled to that contract — the only
+  question is whether the coupling is *honest* (reference the package, reuse the real types) or *hidden* (copy
+  the DTOs and risk drift). Referencing directly reuses the real `SuccessEnvelope<T>`/`ListEnvelope<T>`/
+  `Pagination` → **zero duplication, zero drift, one `Pagination` type** (no naming conflict). Every realistic
+  consumer already has the ASP.NET Core framework (their system-under-test uses it; in-process hosting needs
+  `Mvc.Testing`), and that shared framework ships with the .NET SDK — so there is **no added runtime burden**
+  for test hosts. NFR-1's leanness clause was guarding a framework-free consumer that does not exist for an
+  ASP.NET-specific test client. Note: **P13 "module-agnostic" means reusable across the app's *feature
+  modules*, not host-agnostic** — it does not require avoiding ASP.NET Core.
+- `Microsoft.AspNetCore.Mvc.Testing` (`WebApplicationFactory`) stays **test-only** in this slice (used by the
+  round-trip tests, §9); the WAF convenience helper is the next slice (§11).
+- No `InternalsVisibleTo`; the package uses the public surface of Core and AspNetCore only.
 
 > **Assertion-library note:** FluentAssertions v8/8.10 is commercially licensed — used for *inspiration only*,
 > never copied, never referenced. Our assertions are hand-rolled zero-dep (§7).
@@ -98,7 +110,7 @@ Four small units, each independently testable:
 | Unit | Responsibility | Knows about |
 |------|----------------|-------------|
 | `TestHttpClient` | issue HTTP verbs, own **request context** (verb, URL, body), map response→`Result` | `HttpClient`, `IResultRawFormat` |
-| `IResultRawFormat` (+ `RawJsonFormat`) | serialize requests; deserialize success payloads (strict on `T`); reconstruct raw errors | `System.Text.Json`, the envelopes, `ProblemDetailsErrorReader` |
+| `IResultRawFormat` (+ `RawJsonFormat`) | serialize requests; deserialize success payloads (strict on `T`); reconstruct raw errors | `System.Text.Json`, the **reused** AspNetCore envelopes, `ProblemDetailsErrorReader` |
 | `ProblemDetailsErrorReader` | map `errorType`/`code`/`detail` (+ field map / error array) → typed `ErrorBase`(s) | Core error kinds |
 | `Result(Task)Assertions` | fluent, chainable assertions; compose the rich S6 message at throw-time | `Result<T>`, request context metadata |
 
@@ -128,7 +140,8 @@ public interface IResultRawFormat
 Single seam carries **both** "which serializer" and "which envelope shape" (FR-11.5). Default
 `RawJsonFormat` uses `System.Text.Json`.
 
-**`ReadData<T>`** — deserializes `SuccessEnvelope<T>.data` (scalar) / `ListEnvelope<T>` (list). The valueless
+**`ReadData<T>`** — deserializes the **reused** `Vostra.Results.AspNetCore.SuccessEnvelope<T>.data` (scalar) /
+`ListEnvelope<T>` (list) — the exact types the server emits, so the round-trip cannot drift. The valueless
 path (`SuccessNoDataEnvelope`) is handled by the non-generic client method and does **not** read `data`.
 
 **S7 strict-deserialization guard** — `UnmappedMemberHandling.Disallow` scoped to the **payload `T`** (not the
@@ -172,7 +185,7 @@ Task<Result>               Patch(string url, object body, CancellationToken ct =
 Task<Result>               Delete(string url, CancellationToken ct = default);
 Task<Result<T>>            Delete<T>(string url, CancellationToken ct = default);
 
-public sealed record PagedList<T>(IReadOnlyList<T> Items, Pagination Pagination);  // Pagination mirrors the response
+public sealed record PagedList<T>(IReadOnlyList<T> Items, Pagination Pagination);  // Pagination reused from Vostra.Results.AspNetCore
 ```
 - **No `where T : class`** — Core/STJ don't need it; keeping it would regress flexibility vs the old helper.
 - **Created/201 recovery:** on a 2xx success the client reads the HTTP status — `201` → `Result.Created<T>(data)`
@@ -180,7 +193,8 @@ public sealed record PagedList<T>(IReadOnlyList<T> Items, Pagination Pagination)
   public `Result.Created<T>` factory).
 - URL joining: `baseUrl` + `url` with documented single-slash normalization (improves on the reference's naive
   concat).
-- `PagedList<T>` re-declares a minimal `Pagination` (Testing has no AspNetCore ref); shape matches the response.
+- `PagedList<T>` wraps the **reused** `Vostra.Results.AspNetCore.Pagination` — no re-declaration, so there is a
+  single `Pagination` type across both packages (no ambiguous-reference clash in the round-trip tests).
 
 ---
 
