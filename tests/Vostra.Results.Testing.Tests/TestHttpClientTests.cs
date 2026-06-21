@@ -86,4 +86,58 @@ public class TestHttpClientTests
 
         stub.LastRequest!.RequestUri!.AbsolutePath.Should().Be("/products/7");
     }
+
+    [Fact]
+    public async Task Empty_error_list_attaches_request_context()
+    {
+        var fakeFormat = new FakeRawFormat(Array.Empty<ErrorBase>());
+        var http = StubHttpMessageHandler.Client(HttpStatusCode.BadRequest, "{}");
+        var api = new TestHttpClient(http, "items", fakeFormat);
+
+        var result = await api.Get<Product>("/x");
+
+        result.IsError.Should().BeTrue();
+        result.FirstError.Metadata.Should().ContainKey("request");
+        var ctx = (RequestContext)result.FirstError.Metadata!["request"]!;
+        ctx.Verb.Should().Be("GET");
+        ctx.Url.Should().Be("items/x");
+    }
+
+    [Fact]
+    public async Task Pre_existing_metadata_is_preserved_alongside_request_context()
+    {
+        var seed = new Error("seeded error", "Seed.Code");
+        var withMeta = seed.WithMetadata(new Dictionary<string, object?> { ["seed"] = 123 });
+        var fakeFormat = new FakeRawFormat(new ErrorBase[] { withMeta });
+        var http = StubHttpMessageHandler.Client(HttpStatusCode.BadRequest, "{}");
+        var api = new TestHttpClient(http, "", fakeFormat);
+
+        var result = await api.Get<Product>("/y");
+
+        result.IsError.Should().BeTrue();
+        result.FirstError.Metadata.Should().ContainKey("seed");
+        result.FirstError.Metadata.Should().ContainKey("request");
+        result.FirstError.Metadata!["seed"].Should().Be(123);
+    }
+
+    [Fact]
+    public async Task GetList_success_returns_items_and_pagination()
+    {
+        const string listJson = """
+            {
+                "operationId":"op",
+                "data":[{"id":1,"name":"a"},{"id":2,"name":"b"}],
+                "pagination":{"page":1,"pageSize":20,"totalCount":2,"totalPages":1}
+            }
+            """;
+        var http = StubHttpMessageHandler.Client(HttpStatusCode.OK, listJson);
+        var api = new TestHttpClient(http);
+
+        var result = await api.GetList<Product>("");
+
+        result.IsSuccess.Should().BeTrue();
+        result.TryGetValue(out var page).Should().BeTrue();
+        page!.Items.Should().HaveCount(2);
+        page.Pagination.TotalCount.Should().Be(2);
+    }
 }

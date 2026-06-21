@@ -113,11 +113,9 @@ public sealed class TestHttpClient
 
     private ErrorBase[] AttachRequest(IReadOnlyList<ErrorBase> errors, HttpMethod method, string url, object? body)
     {
-        var array = errors.ToArray();
-        if (array.Length == 0)
-        {
-            return new ErrorBase[] { new Error($"{method.Method} {Combine(url)} failed", "Http.Error") };
-        }
+        var array = errors.Count == 0
+            ? new ErrorBase[] { new Error($"{method.Method} {Combine(url)} failed", "Http.Error") }
+            : errors.ToArray();
 
         var metadata = new Dictionary<string, object?>();
         if (array[0].Metadata is { } existing)
