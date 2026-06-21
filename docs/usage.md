@@ -1,8 +1,14 @@
 # Vostra.Results — Usage Guide
 
-A lean, async-friendly, dependency-free `Result<T>` for .NET, plus ASP.NET Core mapping and an
-integration-testing toolkit. Three packages, one idea: **errors are values, the happy path is implicit,
-and the value only exists where it's valid.**
+Most C# error handling forces a bad trade: throw exceptions for expected failures (and pay for stack
+unwinding, lose the compiler's help, and scatter `try/catch`), or return flags and out-parameters (and
+reason about `null` everywhere). `Vostra.Results` takes a third path — **errors are ordinary values** that
+the type system tracks for you. Three small packages share one idea: **the happy path is implicit, the
+failure path is typed, and a value only exists where it's actually valid.**
+
+- **Vostra.Results** — the `Result<T>` type itself. Zero dependencies, zero happy-path allocation.
+- **Vostra.Results.AspNetCore** — turn a `Result` into the right HTTP response, automatically.
+- **Vostra.Results.Testing** — turn an HTTP response back into a `Result`, so tests read like domain scripts.
 
 ```bash
 dotnet add package Vostra.Results            # the type
@@ -16,6 +22,10 @@ dotnet add package Vostra.Results.Testing    # HTTP  -> Result (tests)
 
 ### Return a result — no factories
 
+A method that can fail just declares `Result<T>` and returns either the value or an error. There's no
+`Result.Ok(...)` / `Result.Fail(...)` ceremony to remember — the value and the error each convert
+themselves, so the happy path looks exactly like ordinary code:
+
 ```csharp
 public Result<Order> GetOrder(int id) =>
     _db.Find(id) is { } order
@@ -23,12 +33,14 @@ public Result<Order> GetOrder(int id) =>
         : new NotFoundError($"Order {id} not found", "Order.NotFound");  // Error -> failure
 ```
 
-Built-in error kinds (each: `new XError(message, code?, causedBy?, metadata?)`):
+Errors aren't strings — each is a typed value with a stable `Code`, a human `Message`, and a neutral
+`ErrorType` (the category boundaries map to HTTP later). The built-ins cover the everyday cases
+(each: `new XError(message, code?, causedBy?, metadata?)`):
 `ValidationError`, `NotFoundError`, `ConflictError`, `AlreadyExistsError`, `UnauthorizedError`,
-`ForbiddenError`, `Error` (unexpected/500). Every error carries a stable `Code`, a `Message`, and a
-neutral `ErrorType`.
+`ForbiddenError`, `Error` (unexpected/500).
 
-Make your own kind by subclassing `ErrorBase`:
+Need a domain-specific failure? Subclass `ErrorBase` once and it behaves like any built-in — typed,
+mappable to a status, assertable in tests:
 
 ```csharp
 public sealed class PaymentDeclinedError : ErrorBase
@@ -43,6 +55,10 @@ public sealed class PaymentDeclinedError : ErrorBase
 ```
 
 ### Consume — no `.Value` footgun
+
+There is deliberately **no** `.Value` property to read at the wrong time. You reach the value only inside a
+branch that runs *because* the result succeeded — so "forgot to check `IsSuccess`" simply can't compile.
+Pick whichever shape fits the call site:
 
 ```csharp
 string label = result.Match(
@@ -60,6 +76,10 @@ result.Switch(
 
 ### Transform & chain (sync)
 
+Here's the real payoff: you keep composing *without ever unwrapping*. Each step runs only if the previous
+one succeeded, and the first error short-circuits the rest — so the chain reads as the happy path while the
+failure path is handled for free:
+
 ```csharp
 Result<decimal> total =
     GetOrder(id)
@@ -71,13 +91,14 @@ Result<Receipt> receipt =
     GetOrder(id).Then(Charge);                               // T -> Result<U> (short-circuits on error)
 ```
 
-`Map` (functor), `Then` (monadic bind), `Tap`/`TapError` (side-effects), `Ensure` (guard → 400),
-`MapError` (re-tag errors).
+The toolkit: `Map` (transform the value), `Then` (run another fallible step), `Tap`/`TapError`
+(side-effects without breaking the chain), `Ensure` (guard → 400), `MapError` (re-tag errors).
 
 ### Async — one `await`, then chain
 
-The chain "lifts" to `Task<Result<T>>` on its first async step and stays there. Sync and async steps
-interleave with no `.Result`, no nested `await`:
+Async usually wrecks this style with `await` noise and `.Result` deadlocks. Here it doesn't. The chain
+"lifts" to `Task<Result<T>>` on its first async step and stays there, so sync and async steps interleave
+freely — **one** `await` at the front, no nesting, no sync-over-async anywhere:
 
 ```csharp
 Result<Receipt> receipt =
@@ -89,6 +110,10 @@ Result<Receipt> receipt =
 
 ### LINQ query syntax
 
+Prefer a declarative shape? The same composition is available as a query. Each `from` only runs if the
+previous one succeeded (so put your fetches *in* the query to skip the rest on failure), and `where`
+becomes a validation guard:
+
 ```csharp
 Result<Invoice> invoice =
     from customer in GetCustomer(id)
@@ -99,6 +124,10 @@ Result<Invoice> invoice =
 
 ### Combine many / validate-all
 
+When you have several *independent* results and want **every** failure at once — the classic "tell me all
+the bad fields", not "fix one, resubmit, repeat" — `Combine` accumulates them. Same tool scales to a
+throttled async fan-out:
+
 ```csharp
 Result<IReadOnlyList<Order>> all = Result.Combine(r1, r2, r3);   // all values, or ALL errors accumulated
 Result combined                  = Result.Combine(v1, v2);       // valueless
@@ -108,6 +137,9 @@ Result<IReadOnlyList<Saved>> saved =
 
 ### 200 vs 201
 
+A success can mean "here it is" or "I just created it" — and that distinction should reach the wire as
+200 vs 201 without a second return type. Flag the created case and the HTTP layer does the rest:
+
 ```csharp
 return order;                  // success (Ok)
 return Result.Created(order);  // success (Created) — maps to HTTP 201 later
@@ -116,8 +148,8 @@ return Result.Created(order);  // success (Created) — maps to HTTP 201 later
 ### One of several success shapes — `Result<T1,T2>` / `Result<T1,T2,T3>`
 
 Sometimes an operation succeeds as *one of several distinct value types* — not "a value or an error", but
-"**this** value, or **that** value, or an error". Reach for the multi-success overloads instead of a shared
-base type or an `object`:
+"**this** value, or **that** value, or an error". Instead of a shared base type or an `object` (which throw
+away static typing), reach for the multi-success overloads — each arm stays its own type:
 
 ```csharp
 public Result<Pdf, Html> Render(Doc doc) =>
@@ -127,8 +159,9 @@ public Result<Pdf, Html> Render(Doc doc) =>
         // return new NotFoundError($"doc {doc.Id}");    // Error -> failure, same channel as Result<T>
 ```
 
-Each arm and the error channel convert implicitly — no factories. Consume by matching **every** arm
-exhaustively (the error branch is always present and always receives the full error list):
+Every arm and the error channel convert implicitly — no factories. You consume by matching **every** arm
+exhaustively, so the compiler guarantees you've handled each shape (the error branch is always present and
+receives the full error list):
 
 ```csharp
 IResult response = Render(doc).Match(
@@ -166,13 +199,22 @@ Result<int, int> b = Result<int, int>.Second(0);   // arm 2  (a != b)
 
 ## 2. Vostra.Results.AspNetCore — `Result` → HTTP
 
+This is where errors-as-values pays off at the edge: one call turns any `Result` into the correct HTTP
+response — success envelope or RFC 7807 `ProblemDetails` — with the status derived from the error itself.
+No per-endpoint `try/catch`, no central status `switch` to edit every time you add an error kind.
+
 ### Setup (optional)
+
+You can wire it explicitly to customize behavior, but it works out of the box with sensible defaults:
 
 ```csharp
 builder.Services.AddVostraResults();   // optional; falls back to sensible defaults if omitted
 ```
 
 ### Return from endpoints
+
+Your endpoint stays one line: return the `Result` through `ToHttpResponse` and let the mapping decide the
+status, body, and (for collections) pagination:
 
 ```csharp
 app.MapGet("/orders/{id}", (int id, HttpContext http) =>
@@ -193,15 +235,22 @@ app.MapDelete("/orders/{id}", (int id, HttpContext http) =>
 
 ### What goes on the wire
 
+Success carries an `operationId` for correlation; failures are standard `ProblemDetails` that keep the
+error's **identity** (`code` + `errorType`) on the wire — not just a message:
+
 ```jsonc
 // success            { "operationId": "…", "data": { … } }
 // list               { "operationId": "…", "data": [ … ], "pagination": { "page":1, "pageSize":20, "totalCount":57, "totalPages":3 } }
 // error (RFC 7807)   { "status":404, "detail":"Order 7 not found", "code":"Order.NotFound", "errorType":"NotFound", … }
 ```
 
-The `code` + `errorType` on the error envelope are what let tests reconstruct the **typed** error (§3).
+That `code` + `errorType` is the bridge to §3: because the identity survives the round-trip, tests can
+reconstruct the **typed** error instead of grepping the message.
 
 ### Customize status codes (open/closed — no central switch)
+
+Mapping is configuration, not code you maintain. Override a category or a specific code; everything else
+keeps its default. Adding a brand-new error kind needs **zero** changes here:
 
 ```csharp
 builder.Services.AddVostraResults(o => o
@@ -209,16 +258,17 @@ builder.Services.AddVostraResults(o => o
     .MapStatusForCode("Order.NotFound", StatusCodes.Status410Gone));   // precedence: code -> type -> default
 ```
 
-Adding a new error kind needs **zero** changes here.
-
 ---
 
 ## 3. Vostra.Results.Testing — HTTP → `Result`
 
-Collapses an HTTP round-trip back into a `Result<T>`, rebuilding the **typed error** so tests assert
-identity, not substrings.
+Integration tests usually drown in HTTP plumbing and brittle `response.Content.Should().Contain("not
+found")` assertions. This package collapses the round-trip back into a `Result<T>` and **rebuilds the typed
+error**, so your tests assert on identity and read like the domain script they're checking.
 
 ### Setup
+
+Point a `TestHttpClient` at your API (real `HttpClient` or an in-process test server) and you're done:
 
 ```csharp
 var api = new TestHttpClient(httpClient, baseUrl: "api/products");
@@ -229,6 +279,9 @@ Verbs (all async, generic + valueless): `Get<T>` · `GetList<T>` · `Post<T>`/`P
 
 ### Assert outcomes — typed, no substring matching
 
+Assert what actually matters — the outcome's identity — by code or by category. `ShouldBeSuccess` returns
+the value so you can keep going; the others read as plain statements of intent:
+
 ```csharp
 var product = await api.Get<Product>("/7").ShouldBeSuccess();    // terminal: returns the value
 await api.Get<Product>("/9").ShouldHaveError("Order.NotFound");  // by exact code
@@ -237,13 +290,14 @@ await api.Post<Product>("", invalid).ShouldBeValidation();       // kind sugar
 await api.Get<Product>("/7").Assert(p => p.Name.Should().Be("Widget")); // inline check, chainable
 ```
 
-On failure, `VostraAssertionException` carries a rich diagnostic (verb, URL, request body, server error) —
-composed only when an assertion actually fails.
+When something does fail, you get a `VostraAssertionException` with a rich diagnostic (verb, URL, request
+body, server error) — built only on actual failure, so passing tests pay nothing for it.
 
 ### Chain dependent requests
 
-`Then` runs the next request **only if the previous succeeded** and short-circuits on the first error, so
-one terminal assertion reports any failure along the way with full diagnostics:
+Multi-step flows compose just like the core type. `Then` runs the next request **only if the previous
+succeeded** and short-circuits on the first failure, so a single terminal assertion reports whatever broke,
+wherever it broke, with full diagnostics:
 
 ```csharp
 var detailed = await api.Post<ProductResponse>("/products/", create1)
@@ -254,8 +308,8 @@ var detailed = await api.Post<ProductResponse>("/products/", create1)
 detailed.Name.Should().Be(create2.Name);
 ```
 
-Want a check at each boundary instead of one at the end? `Assert()` confirms success and passes the result
-through; `Assert(x => …)` also inspects the value:
+Prefer a checkpoint at each step instead of one at the end? `Assert()` confirms success and passes the
+result through; `Assert(x => …)` also inspects the value:
 
 ```csharp
 await api.Post<ProductResponse>("/products/", create1)
@@ -272,6 +326,9 @@ await api.Post<ProductResponse>("/products/", create1)
 
 ### Lists & pagination
 
+List endpoints come back as a first-class result with the values *and* the pagination metadata, both
+ready to assert:
+
 ```csharp
 var page = await api.GetList<Product>().ShouldBeSuccess();
 page.Items.Should().HaveCount(2);
@@ -279,6 +336,9 @@ page.Pagination.TotalCount.Should().Be(2);
 ```
 
 ### Spin up an in-process API and test the real round-trip
+
+No mocks, no separate process — host the real endpoints in-memory and exercise the genuine wire contract,
+typed assertion and all:
 
 ```csharp
 var builder = WebApplication.CreateSlimBuilder();
@@ -294,8 +354,13 @@ await api.Get<Product>("/9").ShouldHaveError("Product.NotFound");   // real wire
 
 ### Swap the serializer / envelope
 
-The default is `RawJsonFormat` (System.Text.Json). Implement `IResultRawFormat` to use Newtonsoft or a
-different envelope, and pass it: `new TestHttpClient(client, baseUrl, myFormat)`.
+Not on System.Text.Json, or use a different envelope shape? The format is injectable — implement
+`IResultRawFormat` (e.g. for Newtonsoft) and pass it in; nothing else changes:
+
+```csharp
+// default is RawJsonFormat (System.Text.Json):
+var api = new TestHttpClient(client, baseUrl, myFormat);
+```
 
 ---
 

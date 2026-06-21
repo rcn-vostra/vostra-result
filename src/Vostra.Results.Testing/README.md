@@ -4,6 +4,9 @@ Integration-testing toolkit for [Vostra.Results](https://www.nuget.org/packages/
 `TestHttpClient` collapses an HTTP round-trip into a `Result<T>`, rebuilding the **typed error** from the
 `Vostra.Results.AspNetCore` response so tests assert error *identity*, not substrings.
 
+The result: tests read like the domain script they're checking — no HTTP plumbing, no brittle
+`Content.Should().Contain("not found")`, and a rich failure diagnostic when something actually breaks:
+
 ```csharp
 var api = new TestHttpClient(httpClient, baseUrl: "products");
 

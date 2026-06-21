@@ -12,8 +12,9 @@ dotnet add package Vostra.Results.AspNetCore
 
 ## Setup (optional)
 
-`ToHttpResponse` works with built-in status defaults out of the box. Call `AddVostraResults` only to
-override the status map:
+The whole point: your error kinds already know what they mean, so the HTTP layer shouldn't repeat that in a
+central `switch`. `ToHttpResponse` reads the status from the error itself and works with sensible defaults
+out of the box — call `AddVostraResults` only when you want to override the map:
 
 ```csharp
 builder.Services.AddVostraResults(o =>
@@ -38,6 +39,9 @@ A new `ErrorBase` subclass maps automatically through its `ErrorType` — no map
 
 ## Usage
 
+Endpoints stay one line — return the `Result` and let the mapping pick the status, body, and pagination.
+Same call in minimal APIs and controllers, no base class:
+
 ```csharp
 // minimal API
 app.MapGet("/orders/{id}", (int id, HttpContext http, IOrderService svc) =>
@@ -54,6 +58,10 @@ app.MapGet("/orders", (HttpContext http, IOrderService svc) =>
 ```
 
 ## Wire shapes
+
+Success bodies stay thin (just a correlation id + your data); failures are standard `ProblemDetails` that
+keep the error's **identity** on the wire — which is exactly what lets the testing package reconstruct the
+typed error later.
 
 Success (`SuccessKind.Ok` → 200, `Created` → 201):
 

@@ -1,7 +1,12 @@
 # Vostra.Results
 
-A lean, async-friendly, **dependency-free** `Result<T>` for .NET. The happy path is implicit, the failure
-path is typed, and there is no `.Value` that returns garbage on failure.
+A lean, async-friendly, **dependency-free** `Result<T>` for .NET. Stop throwing exceptions for expected
+failures and stop juggling success-flags and out-params: errors become ordinary, typed values the compiler
+tracks for you. The happy path stays implicit, the failure path is typed, and there is no `.Value` that
+hands you garbage on failure.
+
+A method that can fail just returns `Result<T>` — and returns the value or the error directly, with no
+`Result.Ok` / `Result.Fail` ceremony:
 
 ```csharp
 public Result<Order> GetOrder(int id) =>
@@ -10,14 +15,16 @@ public Result<Order> GetOrder(int id) =>
         : new NotFoundError($"Order {id} not found", "Order.NotFound"); // Error -> failure
 ```
 
-Consume without a footgun:
+Consume it safely — the value is reachable only inside a branch that runs *because* it succeeded, so you
+can't forget to check:
 
 ```csharp
 string label = result.Match(onOk: o => $"#{o.Id}", onErr: errs => errs[0].Message);
 if (result.TryGetValue(out var order)) { /* use order */ }
 ```
 
-Transform and chain — one `await`, then sync/async steps interleave:
+Compose without ever unwrapping. Each step runs only on success, the first error short-circuits the rest,
+and async folds in with a single `await` — no `.Result`, no nested awaits:
 
 ```csharp
 Result<Receipt> receipt =
@@ -27,7 +34,8 @@ Result<Receipt> receipt =
         .Map(r => r.Receipt);
 ```
 
-Succeed as *one of several* shapes — `Result<T1,T2>` / `Result<T1,T2,T3>` — and match exhaustively:
+When an operation can succeed as *one of several* shapes (not just value-or-error), say so in the type and
+match every arm exhaustively — the compiler makes sure you handle each one:
 
 ```csharp
 public Result<Pdf, Html> Render(Doc doc) =>
@@ -38,6 +46,8 @@ string mime = Render(doc).Match(
     html => "text/html",
     errs => errs[0].Code);                                 // error branch always present
 ```
+
+What you get:
 
 - `readonly struct`, zero happy-path allocation, **zero runtime dependencies**.
 - Built-in error kinds (`ValidationError`, `NotFoundError`, `ConflictError`, `UnauthorizedError`,
