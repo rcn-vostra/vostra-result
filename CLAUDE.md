@@ -13,15 +13,29 @@ questions. Code follows an agreed design, not the other way around.
 
 ## Status
 
-Greenfield. **No code yet** — start from the requirements.
+**All three packages are built, tested, and merged to `main` (and pushed).** Code-complete, **not yet
+published to NuGet** — publishing + pre-1.0 hardening is the next phase.
+
+- **Core** (`Vostra.Results`) — `Result`, `Result<T>`, plus multi-success unions `Result<T1,T2>` /
+  `Result<T1,T2,T3>` (added 2026-06-21); `ErrorBase` + built-in kinds; Match/Switch/TryGet; sync + async
+  combinator matrix; LINQ; aggregation. Zero runtime deps.
+- **AspNetCore** (`Vostra.Results.AspNetCore`) — `ToHttpResponse`, RFC 7807 envelopes, DI status map.
+- **Testing** (`Vostra.Results.Testing`) — `TestHttpClient` → `Result<T>`, typed-error reconstruction,
+  zero-dep fluent assertions.
+
+~194 tests/TFM, green on **net8.0 + net9.0**, 0 warnings.
 
 ## Start here
 
+- **[cc/plans/2026-06-22-nuget-and-prerelease-hardening.md](cc/plans/2026-06-22-nuget-and-prerelease-hardening.md)**
+  — the active worklist: NuGet publishing, packaging gaps, and the full-project review findings.
+- **[docs/usage.md](docs/usage.md)** — the user-facing usage guide (all three packages).
 - **[cc/docs/requirements/result-type-requirements.md](cc/docs/requirements/result-type-requirements.md)**
-  — the spec. Functional requirements (`FR-*`), non-functional (`NFR-*`), pain points being fixed
-  (`P*`), strengths being preserved (`S*`), acceptance criteria (§9), and open decisions (§10).
+  — the original spec. Functional requirements (`FR-*`), non-functional (`NFR-*`), pain points (`P*`),
+  strengths preserved (`S*`), acceptance criteria (§9), open decisions (§10).
 - **[cc/docs/requirements/result-pattern.md](cc/docs/requirements/result-pattern.md)**
   — walkthrough of the **existing** FluentResults-based implementation this library replaces.
+- Design specs for each package live under `docs/superpowers/specs/`.
 
 ## Reference repository
 
@@ -44,8 +58,9 @@ directly instead of guessing at their APIs:
 - **FluentResults** — `C:\Users\Robert\source\repos\EXTERNA\FluentResults` (`src/`, `LICENSE`).
   Reference for: typed `IError`, `CausedBy(exception)`, metadata, `Merge`.
 - **OneOf** — `C:\Users\Robert\source\repos\EXTERNA\OneOf` (`OneOf/`, `licence.md`; MIT, Harry McIntyre).
-  Reference for: discriminated-union / exhaustive `Match`/`Switch` ergonomics and the source-generator
-  approach. **Not needed for Core v1** — keep in mind for later (richer match surface, multi-arity unions).
+  Reference for: discriminated-union / exhaustive `Match`/`Switch` ergonomics and the no-box field-per-arm
+  layout. **Used for the multi-success unions** `Result<T1,T2>` / `Result<T1,T2,T3>` (done 2026-06-21,
+  hand-rolled arities 2–3, no source generator). Spec: `docs/superpowers/specs/2026-06-21-multi-success-result-design.md`.
 - **FluentAssertions** — `C:\Users\Robert\source\repos\EXTERNA\fluentassertions` (`Src/`, `Tests/`, `LICENSE`).
   Reference **for the Testing package** — read its assertion API shape and diagnostic-message ergonomics
   (failure phrasing, `Should().Be...` chaining). The local checkout is **v8 (8.10) — commercially licensed**.
@@ -56,20 +71,28 @@ ErrorOr, FluentResults, and OneOf are **MIT** — code may be lifted/adapted **w
 upstream license notice; credit in the README / THIRD-PARTY-NOTICES, requirements §7). **FluentAssertions
 (v8/8.10) is the exception: commercially licensed — reference for inspiration only, never copy.**
 
-## Decided so far (requirements §10)
+## Decided (requirements §10)
 
 - Type/namespace: **`Result<T>`** in `Vostra.Results` (not "ErrorOr").
 - Error model: **single error, list-capable** (aggregate only when needed).
 - HTTP error envelope: **RFC 7807 `ProblemDetails`**.
+- Serializer default (OD-5): **System.Text.Json** (`RawJsonFormat`); injectable via `IResultRawFormat`.
+- Multi-success unions are a **terminal match surface** by design (no Map/Then/LINQ through a union); the
+  library does **not** null-check combinator delegates (uniform convention — a null delegate NREs).
 
-Still open: early-exit via control-flow exception (OD-3), serializer default (OD-5), retire-vs-wrap the
-old layer (OD-6).
+Still open / deferred: early-exit `Scope`/`OrReturn` via control-flow exception (OD-3); retire-vs-wrap the
+old `AM.Extensions` layer in the reference repo (OD-6); `ValueTask` matrix; BenchmarkDotNet zero-alloc proof
+(NFR-2 §9.7 — needed before 1.0).
 
-## Build order
+## Working in the codebase
 
-Scaffold in this sequence, using requirements §9 as the gate: **`Core` → `AspNetCore` → `Testing`**.
-Highest-leverage first step is the `Core` `Result<T>` struct + `Error` with implicit conversions and
-`Match` (FR-1, FR-3, FR-4) — that alone resolves P1/P3 and the `default!` footgun.
+- **Build/test:** `dotnet test` (multi-targets net8.0 + net9.0; TFMs are per-`.csproj`, **not** in
+  `Directory.Build.props`). 0-warning bar.
+- **Push:** via **WSL `gh`** (authenticated as `rcn123`), **not** Windows Git Bash. Remote `origin` =
+  `rcn-vostra/vostra-result`. Pushing to `main` may require explicit user authorization per commit.
+- **Quirk:** the IDE intermittently strips project entries from `Vostra.Results.sln` (uncommitted); if
+  `dotnet test` says "Unable to find a project to restore", run `git restore Vostra.Results.sln`.
+- **FluentAssertions 8.x** (test-only) is commercially licensed — flagged for resolution before publishing.
 
 
 # Clean out any Claude-related infrormation
