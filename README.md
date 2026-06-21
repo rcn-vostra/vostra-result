@@ -8,3 +8,9 @@ HTTP mapping for `Result`/`Result<T>`: `result.ToHttpResponse(HttpContext)` retu
 success envelope or an RFC 7807 `ProblemDetails` error carrying `code` + `errorType`. Status comes from the
 error via a DI-configured, open/closed map. See
 [src/Vostra.Results.AspNetCore/README.md](src/Vostra.Results.AspNetCore/README.md).
+
+## Vostra.Results.Testing
+
+Integration-testing toolkit: a `TestHttpClient` returning `Result<T>` with typed-error reconstruction, plus
+zero-dependency fluent assertions (`ShouldBeSuccess`, `ShouldHaveError`, kind sugar). See
+[the package README](src/Vostra.Results.Testing/README.md).
