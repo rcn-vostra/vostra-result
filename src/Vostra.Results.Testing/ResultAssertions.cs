@@ -56,6 +56,16 @@ public static class ResultAssertions
         return result;
     }
 
+    /// <summary>Asserts success and returns the result for chaining (no inspection).</summary>
+    public static Result<T> Assert<T>(this Result<T> result)
+    {
+        result.ShouldBeSuccess();
+        return result;
+    }
+
+    /// <summary>Asserts success (valueless) and returns the result for chaining.</summary>
+    public static Result Assert(this Result result) => result.ShouldBeSuccess();
+
     /// <summary>Asserts success then runs <paramref name="assertion"/> on the value; returns the result.</summary>
     public static Result<T> Assert<T>(this Result<T> result, Action<T> assertion)
     {

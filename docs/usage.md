@@ -205,16 +205,20 @@ var detailed = await api.Post<ProductResponse>("/products/", create1)
 detailed.Name.Should().Be(create2.Name);
 ```
 
-Want a check at each boundary instead of one at the end? Use `Assert(...)` between steps (it asserts
-success, runs your check, and passes the result through):
+Want a check at each boundary instead of one at the end? `Assert()` confirms success and passes the result
+through; `Assert(x => …)` also inspects the value:
 
 ```csharp
 await api.Post<ProductResponse>("/products/", create1)
-    .Assert(p => p.Name.Should().Be(create1.Name))
+    .Assert()                                                     // create1 succeeded
     .Then(_ => api.Post<ProductResponse>("/products/", create2))
-    .Assert(p => p.Name.Should().Be(create2.Name))
+    .Assert()                                                     // create2 succeeded
     .Then(p => api.Get<ProductDetailedResponse>($"/products/{p.Id}"))
-    .Assert(p => p.Name.Should().Be(create2.Name));
+    .Assert(p =>                                                  // fetched — now inspect the body
+    {
+        p.Id.Should().Be(create2.Id);
+        p.Name.Should().Be(create2.Name);
+    });
 ```
 
 ### Lists & pagination

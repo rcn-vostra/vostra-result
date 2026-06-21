@@ -30,6 +30,14 @@ public static class ResultTaskAssertions
     public static async Task<Result> ShouldHaveError(this Task<Result> task, ErrorType type) =>
         (await task.ConfigureAwait(false)).ShouldHaveError(type);
 
+    /// <summary>Awaits then asserts success and returns the result for chaining (no inspection).</summary>
+    public static async Task<Result<T>> Assert<T>(this Task<Result<T>> task) =>
+        (await task.ConfigureAwait(false)).Assert();
+
+    /// <summary>Awaits then asserts success (valueless) and returns the result for chaining.</summary>
+    public static async Task<Result> Assert(this Task<Result> task) =>
+        (await task.ConfigureAwait(false)).Assert();
+
     /// <summary>Awaits then asserts success and runs <paramref name="assertion"/> on the value.</summary>
     public static async Task<Result<T>> Assert<T>(this Task<Result<T>> task, Action<T> assertion) =>
         (await task.ConfigureAwait(false)).Assert(assertion);

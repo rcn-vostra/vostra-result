@@ -44,4 +44,20 @@ public class ResultTaskAssertionsTests
 
         await act.Should().ThrowAsync<VostraAssertionException>();
     }
+
+    [Fact]
+    public async Task Assert_noarg_async_chains_on_success()
+    {
+        var chained = await OkAsync(3).Assert();
+
+        chained.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Assert_noarg_async_throws_on_failure()
+    {
+        var act = async () => await FailAsync().Assert();
+
+        await act.Should().ThrowAsync<VostraAssertionException>();
+    }
 }

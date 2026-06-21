@@ -103,6 +103,46 @@ public class ResultAssertionsTests
     }
 
     [Fact]
+    public void Assert_noarg_returns_result_on_success()
+    {
+        Result<int> result = 5;
+
+        var chained = result.Assert();
+
+        chained.Should().Be(result);
+    }
+
+    [Fact]
+    public void Assert_noarg_throws_on_failure()
+    {
+        Result<int> result = new NotFoundError("nope", "X.NotFound");
+
+        var act = () => result.Assert();
+
+        act.Should().Throw<VostraAssertionException>();
+    }
+
+    [Fact]
+    public void Assert_noarg_nongeneric_returns_result_on_success()
+    {
+        var result = Result.Success;
+
+        var chained = result.Assert();
+
+        chained.Should().Be(result);
+    }
+
+    [Fact]
+    public void Assert_noarg_nongeneric_throws_on_failure()
+    {
+        Result result = new NotFoundError("nope", "X.NotFound");
+
+        var act = () => result.Assert();
+
+        act.Should().Throw<VostraAssertionException>();
+    }
+
+    [Fact]
     public void Failure_message_includes_request_context_when_present()
     {
         var error = new NotFoundError("gone", "X.NotFound")
