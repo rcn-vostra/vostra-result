@@ -48,8 +48,6 @@ public readonly partial struct Result<T1, T2> : IEquatable<Result<T1, T2>>
     public IReadOnlyList<ErrorBase> Errors =>
         _errors ?? (_initialized ? Array.Empty<ErrorBase>() : ResultSentinels.UninitializedList);
 
-    internal ErrorBase[] ErrorArray => _errors ?? ResultSentinels.UninitializedArray;
-
     /// <summary>The first error. Throws if this is a success.</summary>
     public ErrorBase FirstError =>
         IsError ? Errors[0] : throw new InvalidOperationException("Result is a success; there is no error.");
@@ -116,6 +114,7 @@ public readonly partial struct Result<T1, T2> : IEquatable<Result<T1, T2>>
     public static bool operator !=(Result<T1, T2> left, Result<T1, T2> right) => !left.Equals(right);
 
     /// <inheritdoc />
+    // ToString is a diagnostic path; boxing the active arm here does not affect the zero-box success/Match path.
     public override string ToString() =>
         IsError ? $"Error[{Errors.Count}]({FirstError})" : $"Success({(_index == 1 ? _value1 : (object?)_value2)})";
 }

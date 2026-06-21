@@ -103,6 +103,41 @@ public class ResultOfT1T2T3Tests
     }
 
     [Fact]
+    public void Equal_results_have_equal_hash_codes()
+    {
+        Result<int, string, bool> a = true;
+        Result<int, string, bool> b = true;
+        a.GetHashCode().Should().Be(b.GetHashCode());
+    }
+
+    [Fact]
+    public void Null_reference_success_does_not_throw_on_hashcode()
+    {
+        Result<int, string?, bool> result = (string?)null;
+
+        result.IsSuccess.Should().BeTrue();
+        result.Index.Should().Be(2);
+        var act = () => result.GetHashCode();
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Switch_with_null_delegate_for_active_arm_throws()
+    {
+        Action<bool> onT3 = null!;
+        var act = () => Produce(3).Switch(i => { }, s => { }, onT3, e => { });
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Error_arm_receives_the_full_error_list()
+    {
+        Result<int, string, bool> result = new ErrorBase[] { new NotFoundError("a"), new ConflictError("b") };
+
+        result.Match(i => 0, s => 0, b => 0, e => e.Count).Should().Be(2);
+    }
+
+    [Fact]
     public void ToString_distinguishes_success_and_error()
     {
         Produce(3).ToString().Should().Contain("Success");
