@@ -2,6 +2,15 @@
 
 A lean, async-friendly, dependency-free `Result<T>` type for .NET — plus ASP.NET Core mapping and an integration-testing toolkit. Released under MIT.
 
+## 📖 [Usage Guide](docs/usage.md)
+
+Start here — a short, example-first walkthrough of all three packages (returning results, `Match`/`Then`/LINQ,
+async chaining, HTTP mapping, and typed-error integration testing incl. chaining dependent requests).
+
+## Vostra.Results
+
+The core `Result<T>` type. See [the package README](src/Vostra.Results/README.md).
+
 ## Vostra.Results.AspNetCore
 
 HTTP mapping for `Result`/`Result<T>`: `result.ToHttpResponse(HttpContext)` returns an `IResult` with a thin
