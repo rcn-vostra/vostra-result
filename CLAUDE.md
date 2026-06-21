@@ -34,7 +34,7 @@ C:\Users\Robert\source\repos\_ARCHIVE\VCC\popcat-assortment-admin-api
 That repo is the **live regression suite** for migration (see requirements §8) — its integration
 tests should pass once this library is mature and swapped in.
 
-## Borrow sources (local clones, MIT)
+## Borrow sources (local clones)
 
 Full source of the libraries we borrow from (requirements §7) is checked out locally — read them
 directly instead of guessing at their APIs:
@@ -46,9 +46,15 @@ directly instead of guessing at their APIs:
 - **OneOf** — `C:\Users\Robert\source\repos\EXTERNA\OneOf` (`OneOf/`, `licence.md`; MIT, Harry McIntyre).
   Reference for: discriminated-union / exhaustive `Match`/`Switch` ergonomics and the source-generator
   approach. **Not needed for Core v1** — keep in mind for later (richer match surface, multi-arity unions).
+- **FluentAssertions** — `C:\Users\Robert\source\repos\EXTERNA\fluentassertions` (`Src/`, `Tests/`, `LICENSE`).
+  Reference **for the Testing package** — read its assertion API shape and diagnostic-message ergonomics
+  (failure phrasing, `Should().Be...` chaining). The local checkout is **v8 (8.10) — commercially licensed**.
+  ⚠️ **Inspiration ONLY — never copy code from it.** Our assertion helpers are hand-rolled zero-dep (see the
+  Testing design); we do not take a runtime dependency on FluentAssertions.
 
-All are **MIT** — code may be lifted with attribution; retain license notices and credit them in the
-README / THIRD-PARTY-NOTICES (requirements §7).
+ErrorOr, FluentResults, and OneOf are **MIT** — code may be lifted/adapted **with attribution** (retain the
+upstream license notice; credit in the README / THIRD-PARTY-NOTICES, requirements §7). **FluentAssertions
+(v8/8.10) is the exception: commercially licensed — reference for inspiration only, never copy.**
 
 ## Decided so far (requirements §10)
 
