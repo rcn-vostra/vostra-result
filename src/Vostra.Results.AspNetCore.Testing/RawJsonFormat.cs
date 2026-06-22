@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using Vostra.Results;
 using Vostra.Results.AspNetCore;
 
-namespace Vostra.Results.Testing;
+namespace Vostra.Results.AspNetCore.Testing;
 
 /// <summary>
 /// Default <see cref="IResultRawFormat"/> backed by System.Text.Json. Reads the Vostra.Results.AspNetCore

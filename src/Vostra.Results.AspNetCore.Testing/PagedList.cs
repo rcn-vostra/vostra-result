@@ -1,6 +1,6 @@
 using Vostra.Results.AspNetCore;
 
-namespace Vostra.Results.Testing;
+namespace Vostra.Results.AspNetCore.Testing;
 
 /// <summary>A page of items plus its pagination metadata, returned by <c>TestHttpClient.GetList</c>.</summary>
 /// <typeparam name="T">The element type.</typeparam>

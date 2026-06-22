@@ -1,8 +1,9 @@
 using System.Net;
 using System.Net.Http;
 using Vostra.Results;
+using Vostra.Results.Testing;
 
-namespace Vostra.Results.Testing;
+namespace Vostra.Results.AspNetCore.Testing;
 
 /// <summary>
 /// An async test client that issues HTTP verbs against an API built with Vostra.Results.AspNetCore and

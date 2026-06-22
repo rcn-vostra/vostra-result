@@ -1,6 +1,6 @@
 using Vostra.Results;
 
-namespace Vostra.Results.Testing;
+namespace Vostra.Results.AspNetCore.Testing;
 
 /// <summary>
 /// Translates between HTTP request/response payloads and <see cref="Result{T}"/> building blocks.

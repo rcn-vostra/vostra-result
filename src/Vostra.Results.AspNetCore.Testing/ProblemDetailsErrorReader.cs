@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Vostra.Results;
 
-namespace Vostra.Results.Testing;
+namespace Vostra.Results.AspNetCore.Testing;
 
 /// <summary>
 /// Reconstructs typed <see cref="ErrorBase"/> instances from an RFC 7807 <c>problem+json</c>
