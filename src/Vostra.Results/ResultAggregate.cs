@@ -39,12 +39,20 @@ public static class ResultCollectionExtensions
 
     /// <summary>
     /// Projects each item through <paramref name="selector"/> with at most
-    /// <paramref name="maxConcurrency"/> concurrent invocations, then combines the results.
+    /// <paramref name="maxConcurrency"/> concurrent invocations, returning every per-item
+    /// <see cref="Result{TOut}"/> in source order — successes and failures preserved verbatim
+    /// (no combining). Use this when you need each outcome; use <see cref="SelectAsync{TIn,TOut}"/>
+    /// when you want a single combined result.
     /// </summary>
-    public static async Task<Result<IReadOnlyList<TOut>>> SelectAsync<TIn, TOut>(
+    /// <remarks>
+    /// Cancellation is observed at the throttle gate; in-flight selector calls run to completion
+    /// unless the selector itself observes the token.
+    /// </remarks>
+    public static async Task<IReadOnlyList<Result<TOut>>> SelectResultsAsync<TIn, TOut>(
         this IEnumerable<TIn> source,
         Func<TIn, Task<Result<TOut>>> selector,
-        int maxConcurrency)
+        int maxConcurrency,
+        CancellationToken cancellationToken = default)
     {
         if (maxConcurrency < 1)
         {
@@ -55,7 +63,7 @@ public static class ResultCollectionExtensions
 
         var tasks = source.Select(async item =>
         {
-            await gate.WaitAsync().ConfigureAwait(false);
+            await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
                 return await selector(item).ConfigureAwait(false);
@@ -66,7 +74,18 @@ public static class ResultCollectionExtensions
             }
         }).ToArray();
 
-        var results = await Task.WhenAll(tasks).ConfigureAwait(false);
-        return Result.Combine(results);
+        return await Task.WhenAll(tasks).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Projects each item through <paramref name="selector"/> with at most
+    /// <paramref name="maxConcurrency"/> concurrent invocations, then combines the results
+    /// (all values, or all errors accumulated). For the per-item outcomes instead of a combined
+    /// result, use <see cref="SelectResultsAsync{TIn,TOut}"/>.
+    /// </summary>
+    public static async Task<Result<IReadOnlyList<TOut>>> SelectAsync<TIn, TOut>(
+        this IEnumerable<TIn> source,
+        Func<TIn, Task<Result<TOut>>> selector,
+        int maxConcurrency) =>
+        (await source.SelectResultsAsync(selector, maxConcurrency).ConfigureAwait(false)).Combine();
 }
