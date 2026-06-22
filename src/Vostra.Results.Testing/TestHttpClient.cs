@@ -120,17 +120,7 @@ public sealed class TestHttpClient
             ? new ErrorBase[] { new Error($"{method.Method} {Combine(url)} failed", "Http.Error") }
             : errors.ToArray();
 
-        var metadata = new Dictionary<string, object?>();
-        if (array[0].Metadata is { } existing)
-        {
-            foreach (var pair in existing)
-            {
-                metadata[pair.Key] = pair.Value;
-            }
-        }
-
-        metadata["request"] = new RequestContext(method.Method, Combine(url), body);
-        array[0] = array[0].WithMetadata(metadata);
+        array[0] = array[0].WithRequestContext(new RequestContext(method.Method, Combine(url), body));
         return array;
     }
 

@@ -154,4 +154,17 @@ public class ResultAssertionsTests
         act.Should().Throw<VostraAssertionException>()
             .WithMessage("*GET*products/9*");
     }
+
+    [Fact]
+    public void WithRequestContext_attaches_and_Describe_renders_neutral_fields()
+    {
+        ErrorBase error = new NotFoundError("missing", "Thing.NotFound")
+            .WithRequestContext(new RequestContext("SEND", "wo-inbound", "payload"));
+
+        Result<int> result = error;
+
+        var ex = Assert.Throws<VostraAssertionException>(() => result.ShouldBeSuccess());
+        ex.Message.Should().Contain("SEND wo-inbound");
+        ex.Message.Should().Contain("body: payload");
+    }
 }

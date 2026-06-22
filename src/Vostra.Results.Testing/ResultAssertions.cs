@@ -130,10 +130,12 @@ public static class ResultAssertions
         foreach (var error in errors)
         {
             builder.Append("  - ").Append(error.Type).Append(' ').Append(error.Code).Append(": ").Append(error.Message);
-            if (error.Metadata is { } metadata && metadata.TryGetValue("request", out var raw) && raw is RequestContext request)
+            if (error.Metadata is { } metadata
+                && metadata.TryGetValue(RequestContextExtensions.RequestMetadataKey, out var raw)
+                && raw is RequestContext request)
             {
                 builder.Append(Environment.NewLine).Append("    request: ")
-                    .Append(request.Verb).Append(' ').Append(request.Url);
+                    .Append(request.Operation).Append(' ').Append(request.Target);
                 if (request.Body is not null)
                 {
                     builder.Append(" | body: ").Append(request.Body);

@@ -58,8 +58,8 @@ public class TestHttpClientTests
 
         result.FirstError.Metadata.Should().ContainKey("request");
         var ctx = (RequestContext)result.FirstError.Metadata!["request"]!;
-        ctx.Verb.Should().Be("POST");
-        ctx.Url.Should().Be("products/x");
+        ctx.Operation.Should().Be("POST");
+        ctx.Target.Should().Be("products/x");
         ctx.Body.Should().BeEquivalentTo(new Product(1, "a"));
     }
 
@@ -99,8 +99,8 @@ public class TestHttpClientTests
         result.IsError.Should().BeTrue();
         result.FirstError.Metadata.Should().ContainKey("request");
         var ctx = (RequestContext)result.FirstError.Metadata!["request"]!;
-        ctx.Verb.Should().Be("GET");
-        ctx.Url.Should().Be("items/x");
+        ctx.Operation.Should().Be("GET");
+        ctx.Target.Should().Be("items/x");
     }
 
     [Fact]
@@ -155,6 +155,6 @@ public class TestHttpClientTests
         result.IsError.Should().BeTrue();
         result.FirstError.Code.Should().Be("Http.NullResponse");
         result.FirstError.Metadata.Should().ContainKey("request");
-        ((RequestContext)result.FirstError.Metadata!["request"]!).Url.Should().Be("products/7");
+        ((RequestContext)result.FirstError.Metadata!["request"]!).Target.Should().Be("products/7");
     }
 }
