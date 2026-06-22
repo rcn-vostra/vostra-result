@@ -20,10 +20,15 @@ published to NuGet** — publishing + pre-1.0 hardening is the next phase.
   `Result<T1,T2,T3>` (added 2026-06-21); `ErrorBase` + built-in kinds; Match/Switch/TryGet; sync + async
   combinator matrix; LINQ; aggregation. Zero runtime deps.
 - **AspNetCore** (`Vostra.Results.AspNetCore`) — `ToHttpResponse`, RFC 7807 envelopes, DI status map.
-- **Testing** (`Vostra.Results.Testing`) — `TestHttpClient` → `Result<T>`, typed-error reconstruction,
-  zero-dep fluent assertions.
+- **Testing** (`Vostra.Results.Testing`) — **transport-neutral** chain-and-assert over any
+  `Task<Result<T>>`: `Then` + zero-dep fluent assertions + `WithRequestContext` diagnostics. **Core-only**
+  (no ASP.NET Core dep) since the 2026-06-22 split.
+- **AspNetCore.Testing** (`Vostra.Results.AspNetCore.Testing`) — the HTTP `TestHttpClient` → `Result<T>`
+  with typed-error reconstruction from RFC 7807; builds on `Vostra.Results.Testing`.
+- **Core** also has `SelectResultsAsync` — a non-collapsing batch traverse (per-item `Result<T>` preserved),
+  added 2026-06-22.
 
-~194 tests/TFM, green on **net8.0 + net9.0**, 0 warnings.
+~203 tests/TFM, green on **net8.0 + net9.0**, 0 warnings.
 
 ## Start here
 

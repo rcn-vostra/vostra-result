@@ -8,12 +8,14 @@ failure path is typed, and a value only exists where it's actually valid.**
 
 - **Vostra.Results** — the `Result<T>` type itself. Zero dependencies, zero happy-path allocation.
 - **Vostra.Results.AspNetCore** — turn a `Result` into the right HTTP response, automatically.
-- **Vostra.Results.Testing** — turn an HTTP response back into a `Result`, so tests read like domain scripts.
+- **Vostra.Results.Testing** — transport-neutral chain & assert over any `Task<Result<T>>`; tests read like domain scripts.
+- **Vostra.Results.AspNetCore.Testing** — turn an HTTP response back into a `Result` (the `TestHttpClient`).
 
 ```bash
-dotnet add package Vostra.Results            # the type
-dotnet add package Vostra.Results.AspNetCore # Result -> HTTP
-dotnet add package Vostra.Results.Testing    # HTTP  -> Result (tests)
+dotnet add package Vostra.Results                    # the type
+dotnet add package Vostra.Results.AspNetCore         # Result -> HTTP
+dotnet add package Vostra.Results.Testing            # chain & assert over any Task<Result<T>> (tests)
+dotnet add package Vostra.Results.AspNetCore.Testing # HTTP -> Result test client
 ```
 
 ---
@@ -283,11 +285,35 @@ builder.Services.AddVostraResults(o => o
 
 ---
 
-## 3. Vostra.Results.Testing — HTTP → `Result`
+## 3. Vostra.Results.Testing — chain & assert over any `Task<Result<T>>`
 
-Integration tests usually drown in HTTP plumbing and brittle `response.Content.Should().Contain("not
-found")` assertions. This package collapses the round-trip back into a `Result<T>` and **rebuilds the typed
-error**, so your tests assert on identity and read like the domain script they're checking.
+The test-composition layer is **transport-neutral**: `Then` (from Core) chains steps that each return
+`Result<T>`/`Task<Result<T>>`, running the next only if the previous succeeded; the `ShouldBe…`/`Assert`
+helpers assert outcomes by **identity** (code or `ErrorType`), not substring. It depends only on the core
+type — point it at an HTTP call, a queue round-trip, or any fallible async operation.
+
+```csharp
+// any function returning Task<Result<T>> composes — here a non-HTTP transport:
+var settled = await SendAndAwaitAsync(workOrder)        // your transport -> Task<Result<State>>
+    .Then(state => AdvanceAsync(state))                 // runs only if the send settled OK
+    .Assert(s => s.Status.Should().Be(Status.Applied))  // inline checkpoint
+    .ShouldBeSuccess();                                 // terminal: returns the value or throws
+```
+
+Attach a `RequestContext` to your errors for the same rich failure diagnostics the HTTP client gets:
+
+```csharp
+return new ExternalRefusalError("contractor rejected line 4")
+    .WithRequestContext(new RequestContext("SEND", "wo-inbound", workOrder));
+// an assertion failure then renders:  request: SEND wo-inbound | body: WorkOrder { ... }
+```
+
+### HTTP adapter — `Vostra.Results.AspNetCore.Testing`
+
+For ASP.NET Core APIs, the `Vostra.Results.AspNetCore.Testing` package adds `TestHttpClient`, which collapses
+the HTTP round-trip back into a `Result<T>` and **rebuilds the typed error** from the RFC 7807 body — so the
+same chain-and-assert layer reads as a domain script over your endpoints, asserting on identity instead of
+brittle `response.Content.Should().Contain("not found")` substring checks.
 
 ### Setup
 

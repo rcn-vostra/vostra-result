@@ -1,28 +1,26 @@
 # Vostra.Results.Testing
 
-Integration-testing toolkit for [Vostra.Results](https://www.nuget.org/packages/Vostra.Results). A
-`TestHttpClient` collapses an HTTP round-trip into a `Result<T>`, rebuilding the **typed error** from the
-`Vostra.Results.AspNetCore` response so tests assert error *identity*, not substrings.
-
-The result: tests read like the domain script they're checking — no HTTP plumbing, no brittle
-`Content.Should().Contain("not found")`, and a rich failure diagnostic when something actually breaks:
+Transport-neutral testing toolkit for [Vostra.Results](https://www.nuget.org/packages/Vostra.Results) —
+the fluent **chain-and-assert** layer, over **any** `Task<Result<T>>`. Depends only on the core type (no
+ASP.NET Core), so it works against an HTTP call, a queue round-trip, or any fallible async operation.
 
 ```csharp
-var api = new TestHttpClient(httpClient, baseUrl: "products");
-
-// success: returns the value
-var product = await api.Get<Product>("/7").ShouldBeSuccess();
-
-// failure: typed-error assertion, no substring matching
-await api.Get<Product>("/9").ShouldHaveError("Product.NotFound");
-await api.Post<Product>("", invalid).ShouldBeValidation();
-
-// lists
-var page = await api.GetList<Product>().ShouldBeSuccess();   // page.Items / page.Pagination
+// any function returning Task<Result<T>> composes:
+var settled = await SendAndAwaitAsync(workOrder)        // your transport -> Task<Result<State>>
+    .Then(state => AdvanceAsync(state))                 // runs only if the previous step succeeded
+    .Assert(s => s.Status.Should().Be(Status.Applied))  // inline checkpoint
+    .ShouldBeSuccess();                                 // terminal: returns the value or throws
 ```
 
-- Fully async (no `.Result`), verbs: `Get`/`GetList`/`Post`/`Put`/`Patch`/`Delete` (generic + valueless).
-- Errors rebuilt from RFC 7807 `problem+json` into the matching `ErrorBase` kind, preserving `Code`.
-- Assertions are zero-dependency and throw a `VostraAssertionException` with a rich diagnostic (verb, URL,
-  request body, server error) composed only on failure.
-- Swap the serializer/envelope by implementing `IResultRawFormat` (default: `RawJsonFormat`, System.Text.Json).
+- **Chain:** `Then` (from Core) runs the next step only if the previous succeeded; the first failure
+  short-circuits, so one terminal assertion reports whatever broke, wherever it broke.
+- **Assert by identity:** `ShouldBeSuccess` / `ShouldHaveError(code | ErrorType)` / `Assert` /
+  `ShouldBeNotFound` / `ShouldBeValidation` / … — never substring matching.
+- **Rich diagnostics:** failures throw a `VostraAssertionException` composed only on failure. Attach a
+  `RequestContext` to your errors — `error.WithRequestContext(new RequestContext("SEND", "queue", body))` —
+  to get the same "what was attempted" line on any transport.
+
+For ASP.NET Core APIs, add
+[Vostra.Results.AspNetCore.Testing](https://www.nuget.org/packages/Vostra.Results.AspNetCore.Testing) — a
+`TestHttpClient` that turns the HTTP round-trip back into a `Result<T>` (typed error rebuilt from RFC 7807)
+and feeds this same chain-and-assert layer.

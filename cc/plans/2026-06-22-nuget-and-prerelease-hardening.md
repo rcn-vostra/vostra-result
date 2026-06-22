@@ -45,8 +45,10 @@ an org-owned OSS project, create/use an org. This affects `Authors`/`Company` (c
 | D4 | Owner identity | personal **vs** `Vostra` org | open — drives Authors/URL |
 | D5 | Version coupling | lockstep all 3 **vs** independent | **lockstep** for v1 (simpler; Core must publish first so the other two can restore) |
 
-Note: the 3 packages have a dependency chain (`Results` ← `AspNetCore` ← `Testing`). The SDK rewrites
-`ProjectReference` → versioned `PackageReference` at pack time, so **Core must be on nuget.org first**.
+Note: after the 2026-06-22 Testing split there are **4** packages. Dependency graph: `Results` ←
+`AspNetCore`; `Results` ← `Testing`; {`AspNetCore`, `Testing`} ← `AspNetCore.Testing`. The SDK rewrites
+`ProjectReference` → versioned `PackageReference` at pack time, so **Core must be on nuget.org first**, then
+`AspNetCore` and `Testing` (both off Core), then `AspNetCore.Testing` (off the prior two).
 
 ---
 
@@ -150,4 +152,7 @@ Ranked; none block publish but several are **SemVer-relevant** (cheaper to fix b
 6. Benchmark project (§4) — can run in parallel; needed for the §9.7 gate but not for a *preview* push.
 7. Non-blocking fixes (§5) + test gaps (§6) — fold the SemVer-relevant ones (5.1, 5.7) in **before** 1.0,
    the rest can trail.
-8. Publish Core first, then AspNetCore, then Testing (dependency order).
+8. Publish Core first, then AspNetCore + Testing (both off Core), then AspNetCore.Testing (dependency order).
+   Note: the NFR-1 "Testing depends on AspNetCore" rationale now applies to **AspNetCore.Testing** —
+   `Vostra.Results.Testing` is Core-only after the 2026-06-22 split. Add a `PackageTags`/packaging pass for
+   the new `AspNetCore.Testing` project alongside the others (§3).
