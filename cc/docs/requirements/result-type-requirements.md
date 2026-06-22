@@ -212,8 +212,8 @@ can name as we like (`Result<T>`, namespace e.g. `Vostra.Results`).
   Testing's dependencies are defined by that package's design spec, not constrained here.
 - **NFR-2 — Allocation.** Success path zero-alloc (`readonly struct`); error path allocates only the
   error(s). Benchmarked with BenchmarkDotNet; a happy-path `Then` chain MUST not allocate.
-- **NFR-3 — Target frameworks.** `net8.0` and `net9.0` (matches reference repo, which multi-targets).
-  `netstandard2.0` SHOULD be considered for broad reuse.
+- **NFR-3 — Target frameworks.** `net8.0` and `net10.0` (the two LTS releases; net9.0 STS dropped
+  2026-06-22 on the .NET 10 upgrade). `netstandard2.0` SHOULD be considered for broad reuse.
 - **NFR-4 — Nullability & AOT.** Full nullable annotations; trim/AOT-safe (no reflection in the core type).
 - **NFR-5 — Thread-safety.** The value type is immutable and safe to pass across awaits.
 - **NFR-6 — API stability.** SemVer; public surface documented with XML docs and analyzer-friendly.

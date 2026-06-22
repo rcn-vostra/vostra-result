@@ -28,7 +28,7 @@ published to NuGet** — publishing + pre-1.0 hardening is the next phase.
 - **Core** also has `SelectResultsAsync` — a non-collapsing batch traverse (per-item `Result<T>` preserved),
   added 2026-06-22.
 
-~203 tests/TFM, green on **net8.0 + net9.0**, 0 warnings.
+~203 tests/TFM, green on **net8.0 + net10.0** (the two LTS lines; net9.0 dropped 2026-06-22), 0 warnings.
 
 ## Start here
 
@@ -91,7 +91,7 @@ old `AM.Extensions` layer in the reference repo (OD-6); `ValueTask` matrix; Benc
 
 ## Working in the codebase
 
-- **Build/test:** `dotnet test` (multi-targets net8.0 + net9.0; TFMs are per-`.csproj`, **not** in
+- **Build/test:** `dotnet test` (multi-targets net8.0 + net10.0; TFMs are per-`.csproj`, **not** in
   `Directory.Build.props`). 0-warning bar.
 - **Push:** via **WSL `gh`** (authenticated as `rcn123`), **not** Windows Git Bash. Remote `origin` =
   `rcn-vostra/vostra-result`. Pushing to `main` may require explicit user authorization per commit.

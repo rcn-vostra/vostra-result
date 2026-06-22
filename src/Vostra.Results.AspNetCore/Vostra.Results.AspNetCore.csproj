@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>Vostra.Results.AspNetCore</PackageId>
     <Description>ASP.NET Core HTTP mapping for Vostra.Results — Result&lt;T&gt; to IResult with RFC 7807 ProblemDetails.</Description>

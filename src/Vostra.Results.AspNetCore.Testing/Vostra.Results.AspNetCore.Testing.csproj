@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>Vostra.Results.AspNetCore.Testing</PackageId>
     <Description>HTTP integration-testing toolkit for Vostra.Results — a TestHttpClient returning Result&lt;T&gt; with typed-error reconstruction over the Vostra.Results.AspNetCore response contract.</Description>
