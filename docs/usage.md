@@ -135,6 +135,29 @@ Result<IReadOnlyList<Saved>> saved =
     await items.SelectAsync(i => SaveAsync(i), maxConcurrency: 4); // throttled fan-out, then combine
 ```
 
+### Keep every outcome (don't collapse)
+
+`Combine`/`SelectAsync` are *all-or-nothing*: one failure discards every success. When you instead need
+to **record every per-item outcome** — the successes *and* the failures — and decide once over the whole
+batch, reach for `SelectResultsAsync`. It's the non-collapsing sibling of `Combine`: same throttle, but it
+hands back every `Result<T>` in input order so you summarize however you like:
+
+```csharp
+// run each item (throttled), keep every per-item Result<T> — successes AND failures
+IReadOnlyList<Result<Handled>> outcomes =
+    await batch.SelectResultsAsync(HandleAsync, maxConcurrency: 4, ct);
+
+var failures = outcomes.Where(r => r.IsError).ToArray();   // nothing discarded
+bool accept  = failures.Length == 0;
+
+// pair back to inputs when the outcome doesn't carry identity (order is guaranteed):
+foreach (var (item, outcome) in batch.Zip(outcomes))
+    outcome.Switch(ok => Audit(item, ok), errs => Audit(item, errs[0].Code));
+```
+
+`SelectAsync` is just `SelectResultsAsync(...).Combine()` — use it when you want the single combined
+result; use `SelectResultsAsync` when the per-item detail *is* the point.
+
 ### 200 vs 201
 
 A success can mean "here it is" or "I just created it" — and that distinction should reach the wire as
