@@ -5,9 +5,11 @@
     <PackageId>Vostra.Results.AspNetCore</PackageId>
     <Description>ASP.NET Core HTTP mapping for Vostra.Results — Result&lt;T&gt; to IResult with RFC 7807 ProblemDetails.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>result;result-type;error-handling;aspnetcore;problemdetails;rfc7807;minimal-api;web-api</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\Vostra.Results\Vostra.Results.csproj" />
   </ItemGroup>

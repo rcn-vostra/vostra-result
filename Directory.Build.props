@@ -5,9 +5,32 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <Authors>Vostra</Authors>
-    <Company>Vostra</Company>
+
+    <!-- Identity -->
+    <Authors>vostra.ai</Authors>
+    <Company>vostra.ai</Company>
+    <Copyright>Copyright (c) vostra.ai</Copyright>
+
+    <!-- Licensing -->
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/rcn-vostra/vostra-result</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/rcn-vostra/vostra-result</PackageProjectUrl>
+
+    <!-- Version -->
+    <Version>1.0.0-preview.1</Version>
+
+    <!-- Source Link -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+
+    <!-- Symbols -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <!-- Pack THIRD-PARTY-NOTICES.md into every packable project -->
+  <ItemGroup Condition="'$(IsPackable)' != 'false'">
+    <None Include="$(MSBuildThisFileDirectory)THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

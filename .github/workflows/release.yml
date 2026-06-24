@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Test
+        run: dotnet test -c Release --no-build
+
+      - name: Pack
+        run: dotnet pack -c Release -p:ContinuousIntegrationBuild=true -o ./artifacts
+
+      - name: Push Core
+        run: |
+          V=${{ steps.version.outputs.VERSION }}
+          dotnet nuget push "./artifacts/Vostra.Results.${V}.nupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+          dotnet nuget push "./artifacts/Vostra.Results.${V}.snupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Push AspNetCore
+        run: |
+          V=${{ steps.version.outputs.VERSION }}
+          dotnet nuget push "./artifacts/Vostra.Results.AspNetCore.${V}.nupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+          dotnet nuget push "./artifacts/Vostra.Results.AspNetCore.${V}.snupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Push Testing
+        run: |
+          V=${{ steps.version.outputs.VERSION }}
+          dotnet nuget push "./artifacts/Vostra.Results.Testing.${V}.nupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+          dotnet nuget push "./artifacts/Vostra.Results.Testing.${V}.snupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Push AspNetCore.Testing
+        run: |
+          V=${{ steps.version.outputs.VERSION }}
+          dotnet nuget push "./artifacts/Vostra.Results.AspNetCore.Testing.${V}.nupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+          dotnet nuget push "./artifacts/Vostra.Results.AspNetCore.Testing.${V}.snupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
