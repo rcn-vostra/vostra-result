@@ -6,3 +6,6 @@ artifacts/
 
 # stray test logs
 *.log
+
+# Subagent-driven-development scratch (briefs, reports, ledger, diffs)
+.superpowers/
