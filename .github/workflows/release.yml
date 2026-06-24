@@ -45,7 +45,7 @@ jobs:
         uses: NuGet/login@v1
         id: login
         with:
-          user: ${{ secrets.NUGET_USER }}   # your nuget.org username (profile name), NOT your email
+          user: rcn   # nuget.org username (profile name), NOT your email
 
       - name: Push Core
         run: |
