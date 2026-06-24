@@ -25,7 +25,13 @@ gates** (benchmark, source-link). Order of work tomorrow: account → decisions 
 3. **New-user / publisher registration** page on nuget.org.
 4. **Registration submission** page (username, email confirm).
 5. **Account/offer-detail** page (terms acceptance).
-6. Create an **API key** (scoped: *Push new packages and package versions*; glob `Vostra.*`; pick expiry).
+6. **Trusted Publishing (chosen — recommended by nuget.org over API keys):** nuget.org → username →
+   *Trusted Publishing* → add a policy: **Repository Owner** `rcn-vostra`, **Repository** `vostra-result`,
+   **Workflow File** `release.yml` (filename only), **Environment** blank. `release.yml` already mints a
+   short-lived key via `NuGet/login@v1` (OIDC) — no API-key secret to store. Also add a low-sensitivity repo
+   secret `NUGET_USER` = your nuget.org profile name (or hardcode it in `release.yml`). (Private-repo policies
+   are "pending" for 7 days until the first successful publish locks them; this repo is public, so it activates
+   immediately.)
 7. **Reserve the `Vostra.` ID prefix** (nuget.org → Account → *Reserve ID prefix*; requires the account to
    meet the prefix-reservation criteria — may need the first package published first, then request).
 
