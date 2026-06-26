@@ -4,7 +4,7 @@ A lean, async-friendly, dependency-free `Result<T>` type for .NET — plus ASP.N
 integration-testing toolkit. Released under MIT.
 
 ## How we work
-Commit message must never contain : `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>` or anything related, constantly check and clenan out any Claude-related information in commits and code
+Commit message must never contain : `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>` or anything related, constantly check and clean out any Claude-related information in commits and code
 
 
 Design-first: before scaffolding or writing non-trivial code, run a **brainstorming** session
@@ -13,8 +13,10 @@ questions. Code follows an agreed design, not the other way around.
 
 ## Status
 
-**All three packages are built, tested, and merged to `main` (and pushed).** Code-complete, **not yet
-published to NuGet** — publishing + pre-1.0 hardening is the next phase.
+**All four packages are built, tested, and merged to `main` (and pushed).** Code-complete, **not yet
+published to NuGet** — the release CI is wired (tag-triggered OIDC trusted publishing, see
+`.github/workflows/release.yml`), but no `v*` version tag has been pushed yet. Publishing + pre-1.0
+hardening is the next phase.
 
 - **Core** (`Vostra.Results`) — `Result`, `Result<T>`, plus multi-success unions `Result<T1,T2>` /
   `Result<T1,T2,T3>` (added 2026-06-21); `ErrorBase` + built-in kinds; Match/Switch/TryGet; sync + async
@@ -34,7 +36,7 @@ published to NuGet** — publishing + pre-1.0 hardening is the next phase.
 
 - **[cc/plans/2026-06-22-nuget-and-prerelease-hardening.md](cc/plans/2026-06-22-nuget-and-prerelease-hardening.md)**
   — the active worklist: NuGet publishing, packaging gaps, and the full-project review findings.
-- **[docs/usage.md](docs/usage.md)** — the user-facing usage guide (all three packages).
+- **[docs/usage.md](docs/usage.md)** — the user-facing usage guide (all four packages).
 - **[cc/docs/requirements/result-type-requirements.md](cc/docs/requirements/result-type-requirements.md)**
   — the original spec. Functional requirements (`FR-*`), non-functional (`NFR-*`), pain points (`P*`),
   strengths preserved (`S*`), acceptance criteria (§9), open decisions (§10).
@@ -97,8 +99,10 @@ old `AM.Extensions` layer in the reference repo (OD-6); `ValueTask` matrix; Benc
   `rcn-vostra/vostra-result`. Pushing to `main` may require explicit user authorization per commit.
 - **Quirk:** the IDE intermittently strips project entries from `Vostra.Results.sln` (uncommitted); if
   `dotnet test` says "Unable to find a project to restore", run `git restore Vostra.Results.sln`.
-- **FluentAssertions 8.x** (test-only) is commercially licensed — flagged for resolution before publishing.
+- **FluentAssertions** (test-only) is pinned to **7.2.0** — the last Apache-2.0 line — across all four test
+  projects. This resolves the licensing flag (§7 of the prerelease plan); v8.x went commercial. Do **not**
+  bump it to 8.x. (The EXTERNA borrow clone is still v8/8.10, hence the never-copy warning above.)
 
 
-# Clean out any Claude-related infrormation
-Commit message must never contain : `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>` or anything related, constantly check and clenan out any Claude-related information in commits and code
+# Clean out any Claude-related information
+Commit message must never contain : `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>` or anything related, constantly check and clean out any Claude-related information in commits and code
