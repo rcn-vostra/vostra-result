@@ -2,8 +2,9 @@ namespace Vostra.Results;
 
 /// <summary>
 /// Discoverable factories for the built-in error kinds. Type <c>Result.</c> and let IntelliSense
-/// surface every failure — these mirror the concrete error classes one-for-one and are pure
-/// pass-through sugar over their public constructors (so <c>new NotFoundError(...)</c> still works).
+/// surface every failure — these mirror the typed error classes (the catch-all <c>Error</c> is exposed as
+/// <c>Result.Failure(message)</c>) and are pure pass-through sugar over the public constructors (so
+/// <c>new NotFoundError(...)</c> still works).
 /// Each returns the concrete error type; the implicit <see cref="ErrorBase"/> → <see cref="Result"/> /
 /// <c>Result&lt;T&gt;</c> conversions carry it to the call site.
 /// </summary>
@@ -68,10 +69,12 @@ public readonly partial struct Result
         new(message, code, causedBy, metadata);
 
     /// <summary>
-    /// Creates an <see cref="Vostra.Results.Error"/> — the catch-all, unexpected (500-class) fault.
-    /// Intended for boundary exception-translation and truly-unexpected faults, not routine domain failures.
+    /// Creates a failure from a message, backed by the catch-all <see cref="Vostra.Results.Error"/>
+    /// (<see cref="ErrorType.Unexpected"/>, 500-class). Prefer a typed kind for routine domain failures —
+    /// this is for boundary exception-translation and truly-unexpected faults. Overload of
+    /// <see cref="Result.Failure(ErrorBase)"/>, which wraps an already-built error.
     /// </summary>
-    public static Error Error(
+    public static Error Failure(
         string message,
         string code = "General.Unexpected",
         Exception? causedBy = null,

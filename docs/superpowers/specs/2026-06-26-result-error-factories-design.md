@@ -28,7 +28,7 @@ documents itself as *"the single discoverable entry point for explicit factories
 | `Result.AlreadyExistsError(...)` | `AlreadyExistsError` | `Conflict` | `General.AlreadyExists` |
 | `Result.UnauthorizedError(...)` | `UnauthorizedError` | `Unauthorized` | `General.Unauthorized` |
 | `Result.ForbiddenError(...)` | `ForbiddenError` | `Forbidden` | `General.Forbidden` |
-| `Result.Error(...)` | `Error` (catch-all) | `Unexpected` | `General.Unexpected` |
+| `Result.Failure(message, ...)` | `Error` (catch-all) | `Unexpected` | `General.Unexpected` |
 
 ### Shape
 
@@ -52,8 +52,15 @@ public static NotFoundError NotFoundError(
 - **Message-first** keeps the factory consistent with the constructor it wraps. Callers who prefer
   ErrorOr's code-leading style use named arguments: `Result.NotFoundError(code: "Order.NotFound",
   message: "...")`.
-- The method name `Result.Error(...)` intentionally equals the `Error` type name; no non-generic `Result`
-  struct member references the bare `Error` type, so there is no shadowing conflict (verified).
+- The catch-all is exposed as **`Result.Failure(message, ...)`**, not `Result.Error(...)` (decided
+  2026-06-26 after the principal-level API review). Mirroring the type name `Error` reads as too generic and
+  invites using the 500-class catch-all for routine domain failures; `UnexpectedError` would advertise the
+  very anti-pattern (don't model truly-unexpected faults as a `Result` — let them throw). `Failure` is
+  neutral and forms an overload pair with the existing `Result.Failure(ErrorBase)`: a **message** builds the
+  catch-all `Error` (convertible to `Result`/`Result<T>`), an **error** wraps an already-built one.
+- **`ValidationError` gained an optional `field` parameter** (2nd position) that merges into metadata under
+  the public `ErrorBase.FieldMetadataKey`, driving the ASP.NET Core RFC 7807 validation field-map. The
+  factory `Result.ValidationError(..., field:)` mirrors it. (Added 2026-06-26 — closes the review's P1.)
 
 ### Guidance: when a `code` is worth supplying
 

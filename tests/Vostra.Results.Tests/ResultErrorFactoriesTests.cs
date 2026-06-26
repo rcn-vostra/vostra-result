@@ -10,7 +10,7 @@ public class ResultErrorFactoriesTests
         { Result.AlreadyExistsError("m"), new AlreadyExistsError("m") },
         { Result.UnauthorizedError("m"), new UnauthorizedError("m") },
         { Result.ForbiddenError("m"), new ForbiddenError("m") },
-        { Result.Error("m"), new Error("m") },
+        { Result.Failure("m"), new Error("m") },
     };
 
     [Theory]
