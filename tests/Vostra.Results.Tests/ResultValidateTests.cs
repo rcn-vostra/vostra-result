@@ -5,7 +5,7 @@ public class ResultValidateTests
     [Fact]
     public void All_passing_checks_yield_success()
     {
-        var result = Result.Success()
+        var result = Result.Ok()
             .Validate(true, "a")
             .Validate(true, "b");
 
@@ -15,7 +15,7 @@ public class ResultValidateTests
     [Fact]
     public void Accumulates_every_failed_check_in_order()
     {
-        var result = Result.Success()
+        var result = Result.Ok()
             .Validate(false, "email required", field: "email")
             .Validate(true, "age fine", field: "age")
             .Validate(false, "name required", field: "name");
@@ -28,7 +28,7 @@ public class ResultValidateTests
     [Fact]
     public void Builds_a_ValidationError_carrying_field_and_code()
     {
-        var error = Result.Success()
+        var error = Result.Ok()
             .Validate(false, "Email is invalid", field: "email", code: "Email.Invalid")
             .FirstError;
 
@@ -41,6 +41,6 @@ public class ResultValidateTests
     [Fact]
     public void Defaults_to_the_validation_fallback_code_when_unspecified()
     {
-        Result.Success().Validate(false, "bad").FirstError.Code.Should().Be("General.Validation");
+        Result.Ok().Validate(false, "bad").FirstError.Code.Should().Be("General.Validation");
     }
 }

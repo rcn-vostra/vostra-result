@@ -5,7 +5,7 @@ public class ResultTests
     [Fact]
     public void Success_is_a_success()
     {
-        Result.Success().IsSuccess.Should().BeTrue();
+        Result.Ok().IsSuccess.Should().BeTrue();
     }
 
     [Fact]

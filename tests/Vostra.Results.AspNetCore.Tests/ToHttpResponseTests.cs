@@ -78,7 +78,7 @@ public class ToHttpResponseTests
     [Fact]
     public async Task Non_generic_success_returns_operationId_only()
     {
-        var result = Result.Success();
+        var result = Result.Ok();
         var ctx = Context();
         var res = await HttpResultHarness.Execute(result.ToHttpResponse(ctx), ctx.RequestServices);
 

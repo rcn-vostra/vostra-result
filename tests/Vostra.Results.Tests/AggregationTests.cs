@@ -5,7 +5,7 @@ public class AggregationTests
     [Fact]
     public void Combine_nongeneric_is_success_when_all_succeed()
     {
-        Result.Combine(Result.Success(), Result.Success()).IsSuccess.Should().BeTrue();
+        Result.Combine(Result.Ok(), Result.Ok()).IsSuccess.Should().BeTrue();
     }
 
     [Fact]
@@ -13,7 +13,7 @@ public class AggregationTests
     {
         var combined = Result.Combine(
             Result.Failure(new ValidationError("a")),
-            Result.Success(),
+            Result.Ok(),
             Result.Failure(new ValidationError("b")));
 
         combined.IsError.Should().BeTrue();
@@ -92,7 +92,7 @@ public class AggregationTests
     {
         IEnumerable<Result> results = new[]
         {
-            Result.Success(),
+            Result.Ok(),
             Result.Failure(new ValidationError("a")),
             Result.Failure(new ValidationError("b")),
         };

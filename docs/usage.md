@@ -177,7 +177,7 @@ per rule and it accumulates every failure (it does *not* short-circuit), buildin
 you. The passing path allocates nothing:
 
 ```csharp
-Result verdict = Result.Success()
+Result verdict = Result.Ok()
     .Validate(dto.Email is { Length: > 0 }, "Email is required.",   field: "email")
     .Validate(dto.Qty > 0,                  "Qty must be positive.", field: "qty", code: "Qty.NotPositive")
     .Validate(dto.Name is { Length: > 0 },  "Name is required.",     field: "name");

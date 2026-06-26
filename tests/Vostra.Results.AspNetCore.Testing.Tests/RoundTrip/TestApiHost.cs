@@ -51,7 +51,7 @@ public sealed class TestApiHost : IAsyncLifetime
 
         app.MapDelete("/products/{id}", (int id, HttpContext ctx) =>
         {
-            Result result = id == 7 ? Result.Success() : new NotFoundError("gone", "Product.NotFound");
+            Result result = id == 7 ? Result.Ok() : new NotFoundError("gone", "Product.NotFound");
             return result.ToHttpResponse(ctx);
         });
 

@@ -106,7 +106,7 @@ public sealed class TestHttpClient
             return AttachRequest(errors, method, url, body);
         }
 
-        return response.StatusCode == HttpStatusCode.Created ? Result.Created() : Result.Success();
+        return response.StatusCode == HttpStatusCode.Created ? Result.Created() : Result.Ok();
     }
 
     private Result<T> Fail<T>(IReadOnlyList<ErrorBase> errors, HttpMethod method, string url, object? body) =>

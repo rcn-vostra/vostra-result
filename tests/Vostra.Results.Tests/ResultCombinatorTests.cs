@@ -2,7 +2,7 @@ namespace Vostra.Results.Tests;
 
 public class ResultCombinatorTests
 {
-    private static Result Ok() => Result.Success();
+    private static Result Ok() => Result.Ok();
     private static Result Err() => Result.Failure(new ConflictError("dup"));
 
     [Fact]
@@ -85,11 +85,11 @@ public class ResultCombinatorTests
     public void Then_valueless_chains_on_success_and_propagates_on_error()
     {
         var ran = false;
-        Ok().Then(() => { ran = true; return Result.Success(); }).IsSuccess.Should().BeTrue();
+        Ok().Then(() => { ran = true; return Result.Ok(); }).IsSuccess.Should().BeTrue();
         ran.Should().BeTrue();
 
         ran = false;
-        var propagated = Err().Then(() => { ran = true; return Result.Success(); });
+        var propagated = Err().Then(() => { ran = true; return Result.Ok(); });
         ran.Should().BeFalse();
         propagated.IsError.Should().BeTrue();
         propagated.FirstError.Should().BeOfType<ConflictError>();
