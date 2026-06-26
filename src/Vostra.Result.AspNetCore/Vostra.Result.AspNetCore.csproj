@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>Vostra.Result.AspNetCore</PackageId>
+    <Description>ASP.NET Core HTTP mapping for Vostra.Result — Result&lt;T&gt; to IResult with RFC 7807 ProblemDetails.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>result;result-type;error-handling;aspnetcore;problemdetails;rfc7807;minimal-api;web-api</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\Vostra.Result\Vostra.Result.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" Condition="Exists('README.md')" />
+  </ItemGroup>
+</Project>

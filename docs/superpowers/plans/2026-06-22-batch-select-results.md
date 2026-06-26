@@ -17,7 +17,7 @@
 - **Multi-target** `net8.0` + `net9.0`; `dotnet test` runs both TFMs.
 - **No `.Value` footgun** — never surface a value outside `Match`/`Switch`/`TryGet`.
 - **Commit messages must contain NO Claude/Anthropic attribution** (no `Co-Authored-By` Claude trailer, nothing AI-related). Per CLAUDE.md.
-- **Quirk:** if `dotnet test` says "Unable to find a project to restore", run `git restore Vostra.Results.sln` (the IDE intermittently strips project entries).
+- **Quirk:** if `dotnet test` says "Unable to find a project to restore", run `git restore Vostra.Result.sln` (the IDE intermittently strips project entries).
 - Branch: `feature/maximo-feedback-transport-neutral` (already checked out).
 
 ---
@@ -25,14 +25,14 @@
 ### Task 1: Add `SelectResultsAsync` and refactor `SelectAsync`
 
 **Files:**
-- Modify: `src/Vostra.Results/ResultAggregate.cs` (add method to `ResultCollectionExtensions`; refactor `SelectAsync` at lines 44-71)
-- Test: `tests/Vostra.Results.Tests/AggregationTests.cs` (append new `[Fact]`s)
+- Modify: `src/Vostra.Result/ResultAggregate.cs` (add method to `ResultCollectionExtensions`; refactor `SelectAsync` at lines 44-71)
+- Test: `tests/Vostra.Result.Tests/AggregationTests.cs` (append new `[Fact]`s)
 
 **Interfaces:**
 - Consumes: existing `IEnumerable<Result<T>>.Combine()` extension (`ResultAggregate.cs:30`); `Result<T>` members `IsSuccess`/`IsError`/`Errors`/`FirstError`/`Match`; implicit `T → Result<T>` and `ErrorBase → Result<T>` conversions.
 - Produces:
   ```csharp
-  // on static class Vostra.Results.ResultCollectionExtensions
+  // on static class Vostra.Result.ResultCollectionExtensions
   public static Task<IReadOnlyList<Result<TOut>>> SelectResultsAsync<TIn, TOut>(
       this IEnumerable<TIn> source,
       Func<TIn, Task<Result<TOut>>> selector,
@@ -40,7 +40,7 @@
       CancellationToken cancellationToken = default);
   ```
 
-- [ ] **Step 1: Write the first failing test** — append to `tests/Vostra.Results.Tests/AggregationTests.cs` (inside the `AggregationTests` class):
+- [ ] **Step 1: Write the first failing test** — append to `tests/Vostra.Result.Tests/AggregationTests.cs` (inside the `AggregationTests` class):
 
 ```csharp
 [Fact]
@@ -67,7 +67,7 @@ public async Task SelectResultsAsync_preserves_both_successes_and_failures()
 Run: `dotnet test --filter "FullyQualifiedName~SelectResultsAsync_preserves" 2>&1 | tail -n 20`
 Expected: FAIL — compile error, `'IEnumerable<int>' does not contain a definition for 'SelectResultsAsync'`.
 
-- [ ] **Step 3: Implement `SelectResultsAsync`** — in `src/Vostra.Results/ResultAggregate.cs`, add this method to `ResultCollectionExtensions` (place it directly above the existing `SelectAsync`, keeping the existing `// NOTE:` comment which applies to both):
+- [ ] **Step 3: Implement `SelectResultsAsync`** — in `src/Vostra.Result/ResultAggregate.cs`, add this method to `ResultCollectionExtensions` (place it directly above the existing `SelectAsync`, keeping the existing `// NOTE:` comment which applies to both):
 
 ```csharp
 /// <summary>
@@ -200,7 +200,7 @@ public async Task SelectResultsAsync_outcomes_zip_back_to_inputs_in_order()
 Run: `dotnet test --filter "FullyQualifiedName~SelectResultsAsync" 2>&1 | tail -n 15`
 Expected: PASS — 7 tests × 2 TFMs.
 
-- [ ] **Step 7: Refactor `SelectAsync` to delegate, and pin the collapse contrast** — replace the existing `SelectAsync` body (`src/Vostra.Results/ResultAggregate.cs:44-71`) with the delegating one-liner:
+- [ ] **Step 7: Refactor `SelectAsync` to delegate, and pin the collapse contrast** — replace the existing `SelectAsync` body (`src/Vostra.Result/ResultAggregate.cs:44-71`) with the delegating one-liner:
 
 ```csharp
 /// <summary>
@@ -238,12 +238,12 @@ public async Task SelectAsync_still_collapses_to_errors_discarding_successes()
 - [ ] **Step 8: Run the full test suite on both TFMs, verify green and 0 warnings**
 
 Run: `dotnet test 2>&1 | tail -n 25`
-Expected: PASS — all existing tests + 8 new tests, both `net8.0` and `net9.0`, 0 warnings. (If "Unable to find a project to restore": `git restore Vostra.Results.sln` then re-run.)
+Expected: PASS — all existing tests + 8 new tests, both `net8.0` and `net9.0`, 0 warnings. (If "Unable to find a project to restore": `git restore Vostra.Result.sln` then re-run.)
 
 - [ ] **Step 9: Commit**
 
 ```bash
-git add src/Vostra.Results/ResultAggregate.cs tests/Vostra.Results.Tests/AggregationTests.cs
+git add src/Vostra.Result/ResultAggregate.cs tests/Vostra.Result.Tests/AggregationTests.cs
 git commit -m "feat(core): add SelectResultsAsync (non-collapsing batch traverse)
 
 Preserves every per-item Result<T> in source order with a throttle and

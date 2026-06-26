@@ -1,6 +1,6 @@
 # Multi-success `Result<T1,T2>` / `Result<T1,T2,T3>` — Design
 
-**Date:** 2026-06-21 · **Status:** Approved (brainstorm), pre-implementation · **Package:** `Vostra.Results` (Core only)
+**Date:** 2026-06-21 · **Status:** Approved (brainstorm), pre-implementation · **Package:** `Vostra.Result` (Core only)
 
 ## 1. Problem & intent
 
@@ -95,9 +95,9 @@ already owns `ErrorBase`).
 
 ## 7. File layout (follows existing split convention)
 
-- `src/Vostra.Results/ResultOfT1T2.cs` — struct, fields, ctor, construction, implicit ops, equality, ToString.
-- `src/Vostra.Results/ResultOfT1T2.Inspection.cs` — `Match`/`Switch`/`Index`/`IsError`/`Errors`.
-- `src/Vostra.Results/ResultOfT1T2T3.cs` + `.Inspection.cs` — arity-3 equivalents.
+- `src/Vostra.Result/ResultOfT1T2.cs` — struct, fields, ctor, construction, implicit ops, equality, ToString.
+- `src/Vostra.Result/ResultOfT1T2.Inspection.cs` — `Match`/`Switch`/`Index`/`IsError`/`Errors`.
+- `src/Vostra.Result/ResultOfT1T2T3.cs` + `.Inspection.cs` — arity-3 equivalents.
 
 (Two-file-per-type split mirrors `ResultOfT.cs` + `ResultOfT.Inspection.cs`.)
 

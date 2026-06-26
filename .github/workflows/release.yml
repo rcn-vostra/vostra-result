@@ -52,11 +52,11 @@ jobs:
       - name: Push Core
         run: |
           V=${{ steps.version.outputs.VERSION }}
-          dotnet nuget push "./artifacts/Vostra.Results.${V}.nupkg" \
+          dotnet nuget push "./artifacts/Vostra.Result.${V}.nupkg" \
             --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-          dotnet nuget push "./artifacts/Vostra.Results.${V}.snupkg" \
+          dotnet nuget push "./artifacts/Vostra.Result.${V}.snupkg" \
             --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
@@ -64,11 +64,11 @@ jobs:
       - name: Push AspNetCore
         run: |
           V=${{ steps.version.outputs.VERSION }}
-          dotnet nuget push "./artifacts/Vostra.Results.AspNetCore.${V}.nupkg" \
+          dotnet nuget push "./artifacts/Vostra.Result.AspNetCore.${V}.nupkg" \
             --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-          dotnet nuget push "./artifacts/Vostra.Results.AspNetCore.${V}.snupkg" \
+          dotnet nuget push "./artifacts/Vostra.Result.AspNetCore.${V}.snupkg" \
             --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
@@ -76,11 +76,11 @@ jobs:
       - name: Push Testing
         run: |
           V=${{ steps.version.outputs.VERSION }}
-          dotnet nuget push "./artifacts/Vostra.Results.Testing.${V}.nupkg" \
+          dotnet nuget push "./artifacts/Vostra.Result.Testing.${V}.nupkg" \
             --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-          dotnet nuget push "./artifacts/Vostra.Results.Testing.${V}.snupkg" \
+          dotnet nuget push "./artifacts/Vostra.Result.Testing.${V}.snupkg" \
             --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
@@ -88,11 +88,11 @@ jobs:
       - name: Push AspNetCore.Testing
         run: |
           V=${{ steps.version.outputs.VERSION }}
-          dotnet nuget push "./artifacts/Vostra.Results.AspNetCore.Testing.${V}.nupkg" \
+          dotnet nuget push "./artifacts/Vostra.Result.AspNetCore.Testing.${V}.nupkg" \
             --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-          dotnet nuget push "./artifacts/Vostra.Results.AspNetCore.Testing.${V}.snupkg" \
+          dotnet nuget push "./artifacts/Vostra.Result.AspNetCore.Testing.${V}.snupkg" \
             --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate

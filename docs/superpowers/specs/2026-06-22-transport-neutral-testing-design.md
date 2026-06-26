@@ -1,6 +1,6 @@
 # Design — Liberate the chain-and-assert layer (transport-neutral Testing)
 
-**Date:** 2026-06-22 · **Status:** Approved (brainstorm) · **Scope:** packaging split of `Vostra.Results.Testing`.
+**Date:** 2026-06-22 · **Status:** Approved (brainstorm) · **Scope:** packaging split of `Vostra.Result.Testing`.
 **Origin:** Maximo adapter team feedback, ask #1 ([cc/docs-in/request-for-changes-wom-masa.md](../../../cc/docs-in/request-for-changes-wom-masa.md)).
 
 > *"The verbs are the replaceable part; the composition is the treasure. Don't bury the treasure inside
@@ -11,8 +11,8 @@
 
 ## 1. Problem
 
-The `Vostra.Results.Testing` package mixes two concerns in one assembly that references
-`Vostra.Results.AspNetCore`:
+The `Vostra.Result.Testing` package mixes two concerns in one assembly that references
+`Vostra.Result.AspNetCore`:
 
 1. **The treasure (transport-neutral):** the fluent chain-and-assert layer —
    `Then` (Core), `ShouldBeSuccess`/`ShouldHaveError`/`Assert`/`ShouldBeNotFound`/… over
@@ -27,35 +27,35 @@ AspNetCore dependency comes solely from the HTTP-adapter files.
 ## 2. Decision — split into two packages
 
 ```
-Vostra.Results                                  (Core, zero-dep)
-   ├── Vostra.Results.AspNetCore                 (production Result -> HTTP)
-   │      └── Vostra.Results.AspNetCore.Testing  (HTTP test client)   ← NEW package
-   └── Vostra.Results.Testing                    (chain + assert)     ← now Core-only
+Vostra.Result                                  (Core, zero-dep)
+   ├── Vostra.Result.AspNetCore                 (production Result -> HTTP)
+   │      └── Vostra.Result.AspNetCore.Testing  (HTTP test client)   ← NEW package
+   └── Vostra.Result.Testing                    (chain + assert)     ← now Core-only
 ```
 
-- **`Vostra.Results.Testing`** depends **only** on `Vostra.Results`. Transport-neutral; this is what a
+- **`Vostra.Result.Testing`** depends **only** on `Vostra.Result`. Transport-neutral; this is what a
   non-HTTP consumer references.
-- **`Vostra.Results.AspNetCore.Testing`** depends on `Vostra.Results.AspNetCore` **and**
-  `Vostra.Results.Testing`. Naming follows the framework convention (`Microsoft.AspNetCore.Mvc.Testing`)
-  and mirrors the production `Vostra.Results.AspNetCore` package.
+- **`Vostra.Result.AspNetCore.Testing`** depends on `Vostra.Result.AspNetCore` **and**
+  `Vostra.Result.Testing`. Naming follows the framework convention (`Microsoft.AspNetCore.Mvc.Testing`)
+  and mirrors the production `Vostra.Result.AspNetCore` package.
 
 This is a pre-1.0, pre-NuGet reorg: no published consumers, behavior of every moved type unchanged.
 
 ### 2.1 File moves (verified by actual `using`/type coupling)
 
-**`Vostra.Results.Testing` (neutral, Core-only):**
+**`Vostra.Result.Testing` (neutral, Core-only):**
 - `ResultAssertions.cs`, `ResultTaskAssertions.cs`, `VostraAssertionException.cs`
 - `RequestContext.cs` (see §3 — renamed fields, now neutral)
 - **NEW** `RequestContextExtensions.cs` — the public metadata-key const + `WithRequestContext` helper (§3)
 
-**`Vostra.Results.AspNetCore.Testing` (HTTP adapter):**
+**`Vostra.Result.AspNetCore.Testing` (HTTP adapter):**
 - `TestHttpClient.cs`, `ProblemDetailsErrorReader.cs`, `RawJsonFormat.cs`, `IResultRawFormat.cs`,
   `PagedList.cs`
 
 ### 2.2 Namespaces
 
-- Neutral types stay in `namespace Vostra.Results.Testing`.
-- HTTP types move to `namespace Vostra.Results.AspNetCore.Testing` (namespace matches package). Existing
+- Neutral types stay in `namespace Vostra.Result.Testing`.
+- HTTP types move to `namespace Vostra.Result.AspNetCore.Testing` (namespace matches package). Existing
   internal test `using`s update by one line.
 
 ## 3. Diagnostics — `RequestContext` becomes neutral and request-only
@@ -67,7 +67,7 @@ read back by `ResultAssertions.Describe`.
 ### 3.1 Neutralize the fields
 
 ```csharp
-namespace Vostra.Results.Testing;
+namespace Vostra.Result.Testing;
 
 /// <summary>Describes the operation that produced a failed result — attached to the failing error so
 /// assertion failure messages can show what was attempted. Diagnostic only; carries no behavior.</summary>
@@ -97,7 +97,7 @@ Today `metadata["request"]` is a private contract between `TestHttpClient` and `
 any transport can participate:
 
 ```csharp
-namespace Vostra.Results.Testing;
+namespace Vostra.Result.Testing;
 
 public static class RequestContextExtensions
 {
@@ -124,12 +124,12 @@ public static class RequestContextExtensions
 
 ## 4. Test projects
 
-Split `tests/Vostra.Results.Testing.Tests` into two:
+Split `tests/Vostra.Result.Testing.Tests` into two:
 
-- **`Vostra.Results.Testing.Tests`** — assertion + chaining + `WithRequestContext`/`Describe` tests.
+- **`Vostra.Result.Testing.Tests`** — assertion + chaining + `WithRequestContext`/`Describe` tests.
   References **only** the neutral package. This *structurally proves* the neutral package has no AspNetCore
   leak: it would not compile if a moved type still pulled in HTTP.
-- **`Vostra.Results.AspNetCore.Testing.Tests`** — `TestHttpClient` round-trip / reconstruction / pagination
+- **`Vostra.Result.AspNetCore.Testing.Tests`** — `TestHttpClient` round-trip / reconstruction / pagination
   tests. References the HTTP-adapter package.
 
 ## 5. Out of scope — what we are NOT building (ask #1 = "A: liberate + document")
@@ -151,9 +151,9 @@ Split `tests/Vostra.Results.Testing.Tests` into two:
 
 ## 7. Acceptance
 
-- A test project referencing **only** `Vostra.Results.Testing` compiles and runs the full chain+assert
+- A test project referencing **only** `Vostra.Result.Testing` compiles and runs the full chain+assert
   surface (proves no AspNetCore dependency).
-- HTTP tests pass unchanged behaviorally through `Vostra.Results.AspNetCore.Testing`.
+- HTTP tests pass unchanged behaviorally through `Vostra.Result.AspNetCore.Testing`.
 - Assertion-failure diagnostics render the renamed `Operation`/`Target` for both HTTP and a non-HTTP
   attach, via the shared `WithRequestContext` path.
 - `dotnet test` green on net8.0 + net9.0, 0 warnings.

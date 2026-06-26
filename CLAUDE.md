@@ -20,16 +20,16 @@ passes `-p:Version=$VERSION`). Earlier `1.0.0-preview.1/.3/.4` are also on nuget
 The full API review (A−/B+) findings are all addressed; BenchmarkDotNet zero-alloc proof (NFR-2) is the
 remaining nice-to-have.
 
-- **Core** (`Vostra.Results`) — `Result`, `Result<T>`, plus multi-success unions `Result<T1,T2>` /
+- **Core** (`Vostra.Result`) — `Result`, `Result<T>`, plus multi-success unions `Result<T1,T2>` /
   `Result<T1,T2,T3>` (added 2026-06-21); `ErrorBase` + built-in kinds; Match/Switch/TryGet; sync + async
   combinator matrix; LINQ; aggregation. Zero runtime deps.
-- **AspNetCore** (`Vostra.Results.AspNetCore`) — `ToHttpResponse`, RFC 7807 envelopes, DI status map.
-- **Testing** (`Vostra.Results.Testing`) — **transport-neutral** chain-and-assert over any
+- **AspNetCore** (`Vostra.Result.AspNetCore`) — `ToHttpResponse`, RFC 7807 envelopes, DI status map.
+- **Testing** (`Vostra.Result.Testing`) — **transport-neutral** chain-and-assert over any
   `Task<Result<T>>`: Core's `Then` (re-used, not a Testing-package member) + zero-dep fluent assertions +
   `WithRequestContext` diagnostics. **Core-only**
   (no ASP.NET Core dep) since the 2026-06-22 split.
-- **AspNetCore.Testing** (`Vostra.Results.AspNetCore.Testing`) — the HTTP `TestHttpClient` → `Result<T>`
-  with typed-error reconstruction from RFC 7807; builds on `Vostra.Results.Testing`.
+- **AspNetCore.Testing** (`Vostra.Result.AspNetCore.Testing`) — the HTTP `TestHttpClient` → `Result<T>`
+  with typed-error reconstruction from RFC 7807; builds on `Vostra.Result.Testing`.
 - **Core** also has `SelectResultsAsync` — a non-collapsing batch traverse (per-item `Result<T>` preserved),
   added 2026-06-22.
 
@@ -83,7 +83,7 @@ upstream license notice; credit in the README / THIRD-PARTY-NOTICES, requirement
 
 ## Decided (requirements §10)
 
-- Type/namespace: **`Result<T>`** in `Vostra.Results` (not "ErrorOr").
+- Type/namespace: **`Result<T>`** in `Vostra.Result` (not "ErrorOr").
 - Error model: **single error, list-capable** (aggregate only when needed).
 - HTTP error envelope: **RFC 7807 `ProblemDetails`**.
 - Serializer default (OD-5): **System.Text.Json** (`RawJsonFormat`); injectable via `IResultRawFormat`.
@@ -100,8 +100,8 @@ old `AM.Extensions` layer in the reference repo (OD-6); `ValueTask` matrix; Benc
   `Directory.Build.props`). 0-warning bar.
 - **Push:** via **WSL `gh`** (authenticated as `rcn123`), **not** Windows Git Bash. Remote `origin` =
   `rcn-vostra/vostra-result`. Pushing to `main` may require explicit user authorization per commit.
-- **Quirk:** the IDE intermittently strips project entries from `Vostra.Results.sln` (uncommitted); if
-  `dotnet test` says "Unable to find a project to restore", run `git restore Vostra.Results.sln`.
+- **Quirk:** the IDE intermittently strips project entries from `Vostra.Result.sln` (uncommitted); if
+  `dotnet test` says "Unable to find a project to restore", run `git restore Vostra.Result.sln`.
 - **FluentAssertions** (test-only) is pinned to **7.2.0** — the last Apache-2.0 line — across all four test
   projects. This resolves the licensing flag (§7 of the prerelease plan); v8.x went commercial. Do **not**
   bump it to 8.x. (The EXTERNA borrow clone is still v8/8.10, hence the never-copy warning above.)

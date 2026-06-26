@@ -1,10 +1,10 @@
-# Vostra.Results.Testing Implementation Plan
+# Vostra.Result.Testing Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the `Vostra.Results.Testing` package — a `TestHttpClient` that collapses an HTTP round-trip into a `Result<T>` (rebuilding typed errors from the response), plus zero-dependency fluent assertions, so integration tests read as domain scripts.
+**Goal:** Build the `Vostra.Result.Testing` package — a `TestHttpClient` that collapses an HTTP round-trip into a `Result<T>` (rebuilding typed errors from the response), plus zero-dependency fluent assertions, so integration tests read as domain scripts.
 
-**Architecture:** A thin `TestHttpClient` issues HTTP verbs and delegates serialization to an injectable `IResultRawFormat` (default `RawJsonFormat`, System.Text.Json). Errors are reconstructed from the `Vostra.Results.AspNetCore` `problem+json` response by `ProblemDetailsErrorReader`. The client owns request context (verb/URL/body) and attaches it as error metadata; `VostraAssertionException` composes the rich diagnostic message only when an assertion fails. The package depends directly on `Vostra.Results.AspNetCore` to reuse its real envelope/`Pagination` types (zero drift).
+**Architecture:** A thin `TestHttpClient` issues HTTP verbs and delegates serialization to an injectable `IResultRawFormat` (default `RawJsonFormat`, System.Text.Json). Errors are reconstructed from the `Vostra.Result.AspNetCore` `problem+json` response by `ProblemDetailsErrorReader`. The client owns request context (verb/URL/body) and attaches it as error metadata; `VostraAssertionException` composes the rich diagnostic message only when an assertion fails. The package depends directly on `Vostra.Result.AspNetCore` to reuse its real envelope/`Pagination` types (zero drift).
 
 **Tech Stack:** .NET 8/9, C# latest, System.Text.Json (in-box), xUnit + FluentAssertions 8.10 (test-only) + coverlet, Microsoft.AspNetCore.TestHost (round-trip tests).
 
@@ -15,16 +15,16 @@
 - **Target frameworks:** `net8.0;net9.0` (parity with Core/AspNetCore; no `net10.0` this slice).
 - **`Directory.Build.props` is inherited** and sets `Nullable=enable`, `ImplicitUsings=enable`, `LangVersion=latest`, **`TreatWarningsAsErrors=true`**, `EnforceCodeStyleInBuild=true`. All code must be warning-clean.
 - **`GenerateDocumentationFile=true`** on the src project → **every public member needs an XML doc comment** or the build fails (warnings are errors). Test projects do not need XML docs.
-- **Runtime dependency:** the src project references `Vostra.Results.AspNetCore` (which brings Core + the `Microsoft.AspNetCore.App` shared framework). No assertion library, no Newtonsoft in the src project.
+- **Runtime dependency:** the src project references `Vostra.Result.AspNetCore` (which brings Core + the `Microsoft.AspNetCore.App` shared framework). No assertion library, no Newtonsoft in the src project.
 - **Production assertions are hand-rolled zero-dep.** FluentAssertions may be used **only in the test project** (matching the existing test projects).
 - **Commits must contain NO Claude/AI attribution** of any kind (no `Co-Authored-By` trailers, no "Generated with" lines). This is a hard repo rule.
 - **No `InternalsVisibleTo`.** Use only the public surface of Core and AspNetCore.
-- **Solution quirk:** the IDE occasionally strips project entries from `Vostra.Results.sln`. If `dotnet test`/`build` reports "Unable to find a project to restore", run `git restore Vostra.Results.sln` and re-add.
+- **Solution quirk:** the IDE occasionally strips project entries from `Vostra.Result.sln`. If `dotnet test`/`build` reports "Unable to find a project to restore", run `git restore Vostra.Result.sln` and re-add.
 
 ### Reference: Core/AspNetCore public API used by this plan (verbatim)
 
 ```csharp
-// Vostra.Results (Core)
+// Vostra.Result (Core)
 public enum ErrorType { Unexpected, Validation, NotFound, Conflict, Unauthorized, Forbidden }
 public abstract class ErrorBase {
     public string Code { get; } public string Message { get; } public ErrorType Type { get; }
@@ -55,7 +55,7 @@ public readonly partial struct Result {
 }
 public enum SuccessKind { Ok, Created }
 
-// Vostra.Results.AspNetCore  (reused types — DO NOT re-declare)
+// Vostra.Result.AspNetCore  (reused types — DO NOT re-declare)
 public sealed record Pagination(int Page, int PageSize, long TotalCount) { public int TotalPages { get; } }
 public sealed class SuccessEnvelope<T> { public string? OperationId { get; init; } public T? Data { get; init; } }
 public sealed class ListEnvelope<T> { public string? OperationId { get; init; } public IReadOnlyList<T> Data { get; init; } public Pagination Pagination { get; init; } }
@@ -68,31 +68,31 @@ public sealed class ListEnvelope<T> { public string? OperationId { get; init; } 
 ### Task 1: Scaffold projects, solution wiring, `PagedList<T>`
 
 **Files:**
-- Create: `src/Vostra.Results.Testing/Vostra.Results.Testing.csproj`
-- Create: `src/Vostra.Results.Testing/PagedList.cs`
-- Create: `tests/Vostra.Results.Testing.Tests/Vostra.Results.Testing.Tests.csproj`
-- Create: `tests/Vostra.Results.Testing.Tests/GlobalUsings.cs`
-- Create: `tests/Vostra.Results.Testing.Tests/PagedListTests.cs`
-- Modify: `Vostra.Results.sln` (add both projects)
+- Create: `src/Vostra.Result.Testing/Vostra.Result.Testing.csproj`
+- Create: `src/Vostra.Result.Testing/PagedList.cs`
+- Create: `tests/Vostra.Result.Testing.Tests/Vostra.Result.Testing.Tests.csproj`
+- Create: `tests/Vostra.Result.Testing.Tests/GlobalUsings.cs`
+- Create: `tests/Vostra.Result.Testing.Tests/PagedListTests.cs`
+- Modify: `Vostra.Result.sln` (add both projects)
 
 **Interfaces:**
-- Produces: `Vostra.Results.Testing.PagedList<T>` — `public sealed record PagedList<T>(IReadOnlyList<T> Items, Pagination Pagination)` where `Pagination` is `Vostra.Results.AspNetCore.Pagination`.
+- Produces: `Vostra.Result.Testing.PagedList<T>` — `public sealed record PagedList<T>(IReadOnlyList<T> Items, Pagination Pagination)` where `Pagination` is `Vostra.Result.AspNetCore.Pagination`.
 
 - [ ] **Step 1: Create the src project file**
 
-`src/Vostra.Results.Testing/Vostra.Results.Testing.csproj`:
+`src/Vostra.Result.Testing/Vostra.Result.Testing.csproj`:
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageId>Vostra.Results.Testing</PackageId>
-    <Description>Integration-testing toolkit for Vostra.Results — a TestHttpClient returning Result&lt;T&gt; with typed-error reconstruction, plus fluent assertions.</Description>
+    <PackageId>Vostra.Result.Testing</PackageId>
+    <Description>Integration-testing toolkit for Vostra.Result — a TestHttpClient returning Result&lt;T&gt; with typed-error reconstruction, plus fluent assertions.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Vostra.Results.AspNetCore\Vostra.Results.AspNetCore.csproj" />
+    <ProjectReference Include="..\Vostra.Result.AspNetCore\Vostra.Result.AspNetCore.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -103,22 +103,22 @@ public sealed class ListEnvelope<T> { public string? OperationId { get; init; } 
 
 - [ ] **Step 2: Create `PagedList<T>`**
 
-`src/Vostra.Results.Testing/PagedList.cs`:
+`src/Vostra.Result.Testing/PagedList.cs`:
 ```csharp
-using Vostra.Results.AspNetCore;
+using Vostra.Result.AspNetCore;
 
-namespace Vostra.Results.Testing;
+namespace Vostra.Result.Testing;
 
 /// <summary>A page of items plus its pagination metadata, returned by <c>TestHttpClient.GetList</c>.</summary>
 /// <typeparam name="T">The element type.</typeparam>
 /// <param name="Items">The items on this page.</param>
-/// <param name="Pagination">The pagination metadata (reused from Vostra.Results.AspNetCore).</param>
+/// <param name="Pagination">The pagination metadata (reused from Vostra.Result.AspNetCore).</param>
 public sealed record PagedList<T>(IReadOnlyList<T> Items, Pagination Pagination);
 ```
 
 - [ ] **Step 3: Create the test project file**
 
-`tests/Vostra.Results.Testing.Tests/Vostra.Results.Testing.Tests.csproj`:
+`tests/Vostra.Result.Testing.Tests/Vostra.Result.Testing.Tests.csproj`:
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -140,28 +140,28 @@ public sealed record PagedList<T>(IReadOnlyList<T> Items, Pagination Pagination)
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Vostra.Results.Testing\Vostra.Results.Testing.csproj" />
-    <ProjectReference Include="..\..\src\Vostra.Results.AspNetCore\Vostra.Results.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\Vostra.Result.Testing\Vostra.Result.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Vostra.Result.AspNetCore\Vostra.Result.AspNetCore.csproj" />
   </ItemGroup>
 </Project>
 ```
 
 - [ ] **Step 4: Create test global usings**
 
-`tests/Vostra.Results.Testing.Tests/GlobalUsings.cs`:
+`tests/Vostra.Result.Testing.Tests/GlobalUsings.cs`:
 ```csharp
 global using FluentAssertions;
 global using Xunit;
-global using Vostra.Results;
-global using Vostra.Results.AspNetCore;
-global using Vostra.Results.Testing;
+global using Vostra.Result;
+global using Vostra.Result.AspNetCore;
+global using Vostra.Result.Testing;
 ```
 
 - [ ] **Step 5: Write the smoke test for `PagedList<T>`**
 
-`tests/Vostra.Results.Testing.Tests/PagedListTests.cs`:
+`tests/Vostra.Result.Testing.Tests/PagedListTests.cs`:
 ```csharp
-namespace Vostra.Results.Testing.Tests;
+namespace Vostra.Result.Testing.Tests;
 
 public class PagedListTests
 {
@@ -180,7 +180,7 @@ public class PagedListTests
 
 Run:
 ```bash
-dotnet sln Vostra.Results.sln add src/Vostra.Results.Testing/Vostra.Results.Testing.csproj tests/Vostra.Results.Testing.Tests/Vostra.Results.Testing.Tests.csproj
+dotnet sln Vostra.Result.sln add src/Vostra.Result.Testing/Vostra.Result.Testing.csproj tests/Vostra.Result.Testing.Tests/Vostra.Result.Testing.Tests.csproj
 ```
 Expected: "Project ... added to the solution." twice.
 
@@ -188,15 +188,15 @@ Expected: "Project ... added to the solution." twice.
 
 Run:
 ```bash
-dotnet test tests/Vostra.Results.Testing.Tests/Vostra.Results.Testing.Tests.csproj
+dotnet test tests/Vostra.Result.Testing.Tests/Vostra.Result.Testing.Tests.csproj
 ```
 Expected: build succeeds (warnings-as-errors clean), 1 test passes.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add src/Vostra.Results.Testing tests/Vostra.Results.Testing.Tests Vostra.Results.sln
-git commit -m "feat(testing): scaffold Vostra.Results.Testing project, test project, PagedList<T>"
+git add src/Vostra.Result.Testing tests/Vostra.Result.Testing.Tests Vostra.Result.sln
+git commit -m "feat(testing): scaffold Vostra.Result.Testing project, test project, PagedList<T>"
 ```
 
 ---
@@ -204,8 +204,8 @@ git commit -m "feat(testing): scaffold Vostra.Results.Testing project, test proj
 ### Task 2: `ProblemDetailsErrorReader` — reconstruct typed errors
 
 **Files:**
-- Create: `src/Vostra.Results.Testing/ProblemDetailsErrorReader.cs`
-- Create: `tests/Vostra.Results.Testing.Tests/ProblemDetailsErrorReaderTests.cs`
+- Create: `src/Vostra.Result.Testing/ProblemDetailsErrorReader.cs`
+- Create: `tests/Vostra.Result.Testing.Tests/ProblemDetailsErrorReaderTests.cs`
 
 **Interfaces:**
 - Produces: `internal static class ProblemDetailsErrorReader` with `public static IReadOnlyList<ErrorBase> Read(JsonElement root, int statusCode)`. Maps `errorType` → concrete `ErrorBase`; branches on validation map vs error array vs single error. (`internal` is fine — the test project is in the same assembly? No — it's a separate assembly. Make it `public` so tests can call it directly without `InternalsVisibleTo`.)
@@ -214,11 +214,11 @@ git commit -m "feat(testing): scaffold Vostra.Results.Testing project, test proj
 
 - [ ] **Step 1: Write the failing tests**
 
-`tests/Vostra.Results.Testing.Tests/ProblemDetailsErrorReaderTests.cs`:
+`tests/Vostra.Result.Testing.Tests/ProblemDetailsErrorReaderTests.cs`:
 ```csharp
 using System.Text.Json;
 
-namespace Vostra.Results.Testing.Tests;
+namespace Vostra.Result.Testing.Tests;
 
 public class ProblemDetailsErrorReaderTests
 {
@@ -318,22 +318,22 @@ public class ProblemDetailsErrorReaderTests
 
 Run:
 ```bash
-dotnet test tests/Vostra.Results.Testing.Tests --filter ProblemDetailsErrorReaderTests
+dotnet test tests/Vostra.Result.Testing.Tests --filter ProblemDetailsErrorReaderTests
 ```
 Expected: FAIL — `ProblemDetailsErrorReader` does not exist (compile error).
 
 - [ ] **Step 3: Implement `ProblemDetailsErrorReader`**
 
-`src/Vostra.Results.Testing/ProblemDetailsErrorReader.cs`:
+`src/Vostra.Result.Testing/ProblemDetailsErrorReader.cs`:
 ```csharp
 using System.Text.Json;
-using Vostra.Results;
+using Vostra.Result;
 
-namespace Vostra.Results.Testing;
+namespace Vostra.Result.Testing;
 
 /// <summary>
 /// Reconstructs typed <see cref="ErrorBase"/> instances from an RFC 7807 <c>problem+json</c>
-/// document produced by Vostra.Results.AspNetCore. Branches on the <c>errorType</c> extension:
+/// document produced by Vostra.Result.AspNetCore. Branches on the <c>errorType</c> extension:
 /// validation responses carry a field→messages object map; multi-error responses carry an
 /// <c>errors</c> array; single errors carry identity only in the top-level extensions.
 /// </summary>
@@ -419,14 +419,14 @@ public static class ProblemDetailsErrorReader
 
 Run:
 ```bash
-dotnet test tests/Vostra.Results.Testing.Tests --filter ProblemDetailsErrorReaderTests
+dotnet test tests/Vostra.Result.Testing.Tests --filter ProblemDetailsErrorReaderTests
 ```
 Expected: PASS (all reader tests green).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/Vostra.Results.Testing/ProblemDetailsErrorReader.cs tests/Vostra.Results.Testing.Tests/ProblemDetailsErrorReaderTests.cs
+git add src/Vostra.Result.Testing/ProblemDetailsErrorReader.cs tests/Vostra.Result.Testing.Tests/ProblemDetailsErrorReaderTests.cs
 git commit -m "feat(testing): add ProblemDetailsErrorReader rebuilding typed errors from problem+json"
 ```
 
@@ -435,9 +435,9 @@ git commit -m "feat(testing): add ProblemDetailsErrorReader rebuilding typed err
 ### Task 3: `IResultRawFormat` + `RawJsonFormat`
 
 **Files:**
-- Create: `src/Vostra.Results.Testing/IResultRawFormat.cs`
-- Create: `src/Vostra.Results.Testing/RawJsonFormat.cs`
-- Create: `tests/Vostra.Results.Testing.Tests/RawJsonFormatTests.cs`
+- Create: `src/Vostra.Result.Testing/IResultRawFormat.cs`
+- Create: `src/Vostra.Result.Testing/RawJsonFormat.cs`
+- Create: `tests/Vostra.Result.Testing.Tests/RawJsonFormatTests.cs`
 
 **Interfaces:**
 - Consumes: `ProblemDetailsErrorReader.Read(JsonElement, int)`, `PagedList<T>`, AspNetCore `Pagination`.
@@ -453,13 +453,13 @@ git commit -m "feat(testing): add ProblemDetailsErrorReader rebuilding typed err
 
 - [ ] **Step 1: Write the failing tests**
 
-`tests/Vostra.Results.Testing.Tests/RawJsonFormatTests.cs`:
+`tests/Vostra.Result.Testing.Tests/RawJsonFormatTests.cs`:
 ```csharp
 using System.Net;
 using System.Net.Http;
 using System.Text;
 
-namespace Vostra.Results.Testing.Tests;
+namespace Vostra.Result.Testing.Tests;
 
 public class RawJsonFormatTests
 {
@@ -556,17 +556,17 @@ public class RawJsonFormatTests
 
 Run:
 ```bash
-dotnet test tests/Vostra.Results.Testing.Tests --filter RawJsonFormatTests
+dotnet test tests/Vostra.Result.Testing.Tests --filter RawJsonFormatTests
 ```
 Expected: FAIL — `IResultRawFormat`/`RawJsonFormat` do not exist.
 
 - [ ] **Step 3: Create the interface**
 
-`src/Vostra.Results.Testing/IResultRawFormat.cs`:
+`src/Vostra.Result.Testing/IResultRawFormat.cs`:
 ```csharp
-using Vostra.Results;
+using Vostra.Result;
 
-namespace Vostra.Results.Testing;
+namespace Vostra.Result.Testing;
 
 /// <summary>
 /// Translates between HTTP request/response payloads and <see cref="Result{T}"/> building blocks.
@@ -590,18 +590,18 @@ public interface IResultRawFormat
 
 - [ ] **Step 4: Implement `RawJsonFormat`**
 
-`src/Vostra.Results.Testing/RawJsonFormat.cs`:
+`src/Vostra.Result.Testing/RawJsonFormat.cs`:
 ```csharp
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Vostra.Results;
-using Vostra.Results.AspNetCore;
+using Vostra.Result;
+using Vostra.Result.AspNetCore;
 
-namespace Vostra.Results.Testing;
+namespace Vostra.Result.Testing;
 
 /// <summary>
-/// Default <see cref="IResultRawFormat"/> backed by System.Text.Json. Reads the Vostra.Results.AspNetCore
+/// Default <see cref="IResultRawFormat"/> backed by System.Text.Json. Reads the Vostra.Result.AspNetCore
 /// success envelopes and reconstructs typed errors from <c>problem+json</c>. Payload deserialization is
 /// strict (unmapped members throw a helpful hint); the envelope itself is parsed tolerantly.
 /// </summary>
@@ -706,14 +706,14 @@ public sealed class RawJsonFormat : IResultRawFormat
 
 Run:
 ```bash
-dotnet test tests/Vostra.Results.Testing.Tests --filter RawJsonFormatTests
+dotnet test tests/Vostra.Result.Testing.Tests --filter RawJsonFormatTests
 ```
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/Vostra.Results.Testing/IResultRawFormat.cs src/Vostra.Results.Testing/RawJsonFormat.cs tests/Vostra.Results.Testing.Tests/RawJsonFormatTests.cs
+git add src/Vostra.Result.Testing/IResultRawFormat.cs src/Vostra.Result.Testing/RawJsonFormat.cs tests/Vostra.Result.Testing.Tests/RawJsonFormatTests.cs
 git commit -m "feat(testing): add IResultRawFormat seam and RawJsonFormat (STJ) reader"
 ```
 
@@ -722,10 +722,10 @@ git commit -m "feat(testing): add IResultRawFormat seam and RawJsonFormat (STJ) 
 ### Task 4: `TestHttpClient` (all verbs + request context)
 
 **Files:**
-- Create: `src/Vostra.Results.Testing/RequestContext.cs`
-- Create: `src/Vostra.Results.Testing/TestHttpClient.cs`
-- Create: `tests/Vostra.Results.Testing.Tests/StubHttpMessageHandler.cs`
-- Create: `tests/Vostra.Results.Testing.Tests/TestHttpClientTests.cs`
+- Create: `src/Vostra.Result.Testing/RequestContext.cs`
+- Create: `src/Vostra.Result.Testing/TestHttpClient.cs`
+- Create: `tests/Vostra.Result.Testing.Tests/StubHttpMessageHandler.cs`
+- Create: `tests/Vostra.Result.Testing.Tests/TestHttpClientTests.cs`
 
 **Interfaces:**
 - Consumes: `IResultRawFormat`, `RawJsonFormat.Instance`, `PagedList<T>`, Core `Result`/`Result<T>`/`Result.Created<T>`.
@@ -741,13 +741,13 @@ git commit -m "feat(testing): add IResultRawFormat seam and RawJsonFormat (STJ) 
 
 - [ ] **Step 1: Write the stub handler test helper**
 
-`tests/Vostra.Results.Testing.Tests/StubHttpMessageHandler.cs`:
+`tests/Vostra.Result.Testing.Tests/StubHttpMessageHandler.cs`:
 ```csharp
 using System.Net;
 using System.Net.Http;
 using System.Text;
 
-namespace Vostra.Results.Testing.Tests;
+namespace Vostra.Result.Testing.Tests;
 
 /// <summary>Returns a canned response and records the last request for assertions.</summary>
 internal sealed class StubHttpMessageHandler : HttpMessageHandler
@@ -783,11 +783,11 @@ internal sealed class StubHttpMessageHandler : HttpMessageHandler
 
 - [ ] **Step 2: Write the failing client tests**
 
-`tests/Vostra.Results.Testing.Tests/TestHttpClientTests.cs`:
+`tests/Vostra.Result.Testing.Tests/TestHttpClientTests.cs`:
 ```csharp
 using System.Net;
 
-namespace Vostra.Results.Testing.Tests;
+namespace Vostra.Result.Testing.Tests;
 
 public class TestHttpClientTests
 {
@@ -880,15 +880,15 @@ public class TestHttpClientTests
 
 Run:
 ```bash
-dotnet test tests/Vostra.Results.Testing.Tests --filter TestHttpClientTests
+dotnet test tests/Vostra.Result.Testing.Tests --filter TestHttpClientTests
 ```
 Expected: FAIL — `TestHttpClient`/`RequestContext` do not exist.
 
 - [ ] **Step 4: Create `RequestContext`**
 
-`src/Vostra.Results.Testing/RequestContext.cs`:
+`src/Vostra.Result.Testing/RequestContext.cs`:
 ```csharp
-namespace Vostra.Results.Testing;
+namespace Vostra.Result.Testing;
 
 /// <summary>The request that produced a failed result, attached to the failing error's metadata
 /// under the key <c>"request"</c> and surfaced in assertion failure messages.</summary>
@@ -900,16 +900,16 @@ public sealed record RequestContext(string Verb, string Url, object? Body);
 
 - [ ] **Step 5: Implement `TestHttpClient`**
 
-`src/Vostra.Results.Testing/TestHttpClient.cs`:
+`src/Vostra.Result.Testing/TestHttpClient.cs`:
 ```csharp
 using System.Net;
 using System.Net.Http;
-using Vostra.Results;
+using Vostra.Result;
 
-namespace Vostra.Results.Testing;
+namespace Vostra.Result.Testing;
 
 /// <summary>
-/// An async test client that issues HTTP verbs against an API built with Vostra.Results.AspNetCore and
+/// An async test client that issues HTTP verbs against an API built with Vostra.Result.AspNetCore and
 /// collapses each response into a <see cref="Result{T}"/>, reconstructing typed errors on failure.
 /// </summary>
 public sealed class TestHttpClient
@@ -1066,14 +1066,14 @@ public sealed class TestHttpClient
 
 Run:
 ```bash
-dotnet test tests/Vostra.Results.Testing.Tests --filter TestHttpClientTests
+dotnet test tests/Vostra.Result.Testing.Tests --filter TestHttpClientTests
 ```
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add src/Vostra.Results.Testing/RequestContext.cs src/Vostra.Results.Testing/TestHttpClient.cs tests/Vostra.Results.Testing.Tests/StubHttpMessageHandler.cs tests/Vostra.Results.Testing.Tests/TestHttpClientTests.cs
+git add src/Vostra.Result.Testing/RequestContext.cs src/Vostra.Result.Testing/TestHttpClient.cs tests/Vostra.Result.Testing.Tests/StubHttpMessageHandler.cs tests/Vostra.Result.Testing.Tests/TestHttpClientTests.cs
 git commit -m "feat(testing): add TestHttpClient verbs with typed-error and request-context handling"
 ```
 
@@ -1082,9 +1082,9 @@ git commit -m "feat(testing): add TestHttpClient verbs with typed-error and requ
 ### Task 5: `VostraAssertionException` + synchronous assertions
 
 **Files:**
-- Create: `src/Vostra.Results.Testing/VostraAssertionException.cs`
-- Create: `src/Vostra.Results.Testing/ResultAssertions.cs`
-- Create: `tests/Vostra.Results.Testing.Tests/ResultAssertionsTests.cs`
+- Create: `src/Vostra.Result.Testing/VostraAssertionException.cs`
+- Create: `src/Vostra.Result.Testing/ResultAssertions.cs`
+- Create: `tests/Vostra.Result.Testing.Tests/ResultAssertionsTests.cs`
 
 **Interfaces:**
 - Consumes: Core `Result<T>`/`Result`/`ErrorBase`/`ErrorType`, `RequestContext`.
@@ -1101,9 +1101,9 @@ git commit -m "feat(testing): add TestHttpClient verbs with typed-error and requ
 
 - [ ] **Step 1: Write the failing tests**
 
-`tests/Vostra.Results.Testing.Tests/ResultAssertionsTests.cs`:
+`tests/Vostra.Result.Testing.Tests/ResultAssertionsTests.cs`:
 ```csharp
-namespace Vostra.Results.Testing.Tests;
+namespace Vostra.Result.Testing.Tests;
 
 public class ResultAssertionsTests
 {
@@ -1204,15 +1204,15 @@ public class ResultAssertionsTests
 
 Run:
 ```bash
-dotnet test tests/Vostra.Results.Testing.Tests --filter ResultAssertionsTests
+dotnet test tests/Vostra.Result.Testing.Tests --filter ResultAssertionsTests
 ```
 Expected: FAIL — `VostraAssertionException`/`ResultAssertions` do not exist.
 
 - [ ] **Step 3: Create the exception**
 
-`src/Vostra.Results.Testing/VostraAssertionException.cs`:
+`src/Vostra.Result.Testing/VostraAssertionException.cs`:
 ```csharp
-namespace Vostra.Results.Testing;
+namespace Vostra.Result.Testing;
 
 /// <summary>Thrown when a Vostra result assertion fails. Prefixed to avoid an ambiguous-reference
 /// clash with NUnit's <c>AssertionException</c>.</summary>
@@ -1225,12 +1225,12 @@ public sealed class VostraAssertionException : Exception
 
 - [ ] **Step 4: Implement `ResultAssertions`**
 
-`src/Vostra.Results.Testing/ResultAssertions.cs`:
+`src/Vostra.Result.Testing/ResultAssertions.cs`:
 ```csharp
 using System.Text;
-using Vostra.Results;
+using Vostra.Result;
 
-namespace Vostra.Results.Testing;
+namespace Vostra.Result.Testing;
 
 /// <summary>Fluent, zero-dependency assertions over <see cref="Result{T}"/> and <see cref="Result"/>.</summary>
 public static class ResultAssertions
@@ -1368,14 +1368,14 @@ public static class ResultAssertions
 
 Run:
 ```bash
-dotnet test tests/Vostra.Results.Testing.Tests --filter ResultAssertionsTests
+dotnet test tests/Vostra.Result.Testing.Tests --filter ResultAssertionsTests
 ```
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/Vostra.Results.Testing/VostraAssertionException.cs src/Vostra.Results.Testing/ResultAssertions.cs tests/Vostra.Results.Testing.Tests/ResultAssertionsTests.cs
+git add src/Vostra.Result.Testing/VostraAssertionException.cs src/Vostra.Result.Testing/ResultAssertions.cs tests/Vostra.Result.Testing.Tests/ResultAssertionsTests.cs
 git commit -m "feat(testing): add VostraAssertionException and fluent sync assertions"
 ```
 
@@ -1384,8 +1384,8 @@ git commit -m "feat(testing): add VostraAssertionException and fluent sync asser
 ### Task 6: Asynchronous assertions (`Task<Result<T>>` / `Task<Result>`)
 
 **Files:**
-- Create: `src/Vostra.Results.Testing/ResultTaskAssertions.cs`
-- Create: `tests/Vostra.Results.Testing.Tests/ResultTaskAssertionsTests.cs`
+- Create: `src/Vostra.Result.Testing/ResultTaskAssertions.cs`
+- Create: `tests/Vostra.Result.Testing.Tests/ResultTaskAssertionsTests.cs`
 
 **Interfaces:**
 - Consumes: the synchronous `ResultAssertions` extension methods.
@@ -1399,9 +1399,9 @@ git commit -m "feat(testing): add VostraAssertionException and fluent sync asser
 
 - [ ] **Step 1: Write the failing tests**
 
-`tests/Vostra.Results.Testing.Tests/ResultTaskAssertionsTests.cs`:
+`tests/Vostra.Result.Testing.Tests/ResultTaskAssertionsTests.cs`:
 ```csharp
-namespace Vostra.Results.Testing.Tests;
+namespace Vostra.Result.Testing.Tests;
 
 public class ResultTaskAssertionsTests
 {
@@ -1454,17 +1454,17 @@ public class ResultTaskAssertionsTests
 
 Run:
 ```bash
-dotnet test tests/Vostra.Results.Testing.Tests --filter ResultTaskAssertionsTests
+dotnet test tests/Vostra.Result.Testing.Tests --filter ResultTaskAssertionsTests
 ```
 Expected: FAIL — `ResultTaskAssertions` does not exist.
 
 - [ ] **Step 3: Implement `ResultTaskAssertions`**
 
-`src/Vostra.Results.Testing/ResultTaskAssertions.cs`:
+`src/Vostra.Result.Testing/ResultTaskAssertions.cs`:
 ```csharp
-using Vostra.Results;
+using Vostra.Result;
 
-namespace Vostra.Results.Testing;
+namespace Vostra.Result.Testing;
 
 /// <summary>Async overloads of <see cref="ResultAssertions"/> for <see cref="Task{TResult}"/>-wrapped results,
 /// so call sites need no stray <c>await</c>.</summary>
@@ -1541,14 +1541,14 @@ public static class ResultTaskAssertions
 
 Run:
 ```bash
-dotnet test tests/Vostra.Results.Testing.Tests --filter ResultTaskAssertionsTests
+dotnet test tests/Vostra.Result.Testing.Tests --filter ResultTaskAssertionsTests
 ```
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/Vostra.Results.Testing/ResultTaskAssertions.cs tests/Vostra.Results.Testing.Tests/ResultTaskAssertionsTests.cs
+git add src/Vostra.Result.Testing/ResultTaskAssertions.cs tests/Vostra.Result.Testing.Tests/ResultTaskAssertionsTests.cs
 git commit -m "feat(testing): add async assertion overloads for Task<Result<T>>"
 ```
 
@@ -1557,8 +1557,8 @@ git commit -m "feat(testing): add async assertion overloads for Task<Result<T>>"
 ### Task 7: Round-trip integration tests (real in-process server)
 
 **Files:**
-- Create: `tests/Vostra.Results.Testing.Tests/RoundTrip/TestApiHost.cs`
-- Create: `tests/Vostra.Results.Testing.Tests/RoundTrip/RoundTripTests.cs`
+- Create: `tests/Vostra.Result.Testing.Tests/RoundTrip/TestApiHost.cs`
+- Create: `tests/Vostra.Result.Testing.Tests/RoundTrip/RoundTripTests.cs`
 
 **Interfaces:**
 - Consumes: `TestHttpClient`, the assertion extensions, AspNetCore `AddVostraResults()` + `ToHttpResponse(HttpContext)`.
@@ -1568,16 +1568,16 @@ git commit -m "feat(testing): add async assertion overloads for Task<Result<T>>"
 
 - [ ] **Step 1: Write the in-process host fixture**
 
-`tests/Vostra.Results.Testing.Tests/RoundTrip/TestApiHost.cs`:
+`tests/Vostra.Result.Testing.Tests/RoundTrip/TestApiHost.cs`:
 ```csharp
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Vostra.Results;
-using Vostra.Results.AspNetCore;
+using Vostra.Result;
+using Vostra.Result.AspNetCore;
 
-namespace Vostra.Results.Testing.Tests.RoundTrip;
+namespace Vostra.Result.Testing.Tests.RoundTrip;
 
 /// <summary>Domain payload used by the round-trip endpoints.</summary>
 public sealed record Product(int Id, string Name);
@@ -1642,13 +1642,13 @@ internal sealed class TestApiHost : IAsyncLifetime
 }
 ```
 
-> **Verified `ToHttpResponse` overloads** (`src/Vostra.Results.AspNetCore/ToHttpResponseExtensions.cs`): scalar `ToHttpResponse<T>(this Result<T>, HttpContext)`; collection `ToHttpResponse<T>(this Result<IEnumerable<T>>, HttpContext, Pagination)`; non-generic `ToHttpResponse(this Result, HttpContext)`. The host code above matches these exactly. Do **not** change the AspNetCore package.
+> **Verified `ToHttpResponse` overloads** (`src/Vostra.Result.AspNetCore/ToHttpResponseExtensions.cs`): scalar `ToHttpResponse<T>(this Result<T>, HttpContext)`; collection `ToHttpResponse<T>(this Result<IEnumerable<T>>, HttpContext, Pagination)`; non-generic `ToHttpResponse(this Result, HttpContext)`. The host code above matches these exactly. Do **not** change the AspNetCore package.
 
 - [ ] **Step 2: Write the round-trip tests**
 
-`tests/Vostra.Results.Testing.Tests/RoundTrip/RoundTripTests.cs`:
+`tests/Vostra.Result.Testing.Tests/RoundTrip/RoundTripTests.cs`:
 ```csharp
-namespace Vostra.Results.Testing.Tests.RoundTrip;
+namespace Vostra.Result.Testing.Tests.RoundTrip;
 
 public class RoundTripTests : IClassFixture<TestApiHost>
 {
@@ -1720,7 +1720,7 @@ public class RoundTripTests : IClassFixture<TestApiHost>
 
 Run:
 ```bash
-dotnet test tests/Vostra.Results.Testing.Tests --filter RoundTripTests
+dotnet test tests/Vostra.Result.Testing.Tests --filter RoundTripTests
 ```
 Expected: PASS. If a compile error mentions `ToHttpResponse` overload mismatch, fix the call in `TestApiHost.cs` to match the real signature (see implementer note) and re-run.
 
@@ -1728,14 +1728,14 @@ Expected: PASS. If a compile error mentions `ToHttpResponse` overload mismatch, 
 
 Run:
 ```bash
-dotnet test tests/Vostra.Results.Testing.Tests
+dotnet test tests/Vostra.Result.Testing.Tests
 ```
 Expected: all tests pass on net8.0 and net9.0.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add tests/Vostra.Results.Testing.Tests/RoundTrip
+git add tests/Vostra.Result.Testing.Tests/RoundTrip
 git commit -m "test(testing): prove Core->AspNetCore->Testing round-trip end to end"
 ```
 
@@ -1744,7 +1744,7 @@ git commit -m "test(testing): prove Core->AspNetCore->Testing round-trip end to 
 ### Task 8: README + package polish
 
 **Files:**
-- Create: `src/Vostra.Results.Testing/README.md`
+- Create: `src/Vostra.Result.Testing/README.md`
 - Modify: `README.md` (repo root — add a short Testing section, matching how Core/AspNetCore are documented)
 - Modify: `THIRD-PARTY-NOTICES.md` (only if reference-derived attribution is warranted; the helper was a port of the repo's own `IntegrationTestHelper`, so likely a one-line note)
 
@@ -1752,13 +1752,13 @@ git commit -m "test(testing): prove Core->AspNetCore->Testing round-trip end to 
 
 - [ ] **Step 1: Write the package README**
 
-`src/Vostra.Results.Testing/README.md`:
+`src/Vostra.Result.Testing/README.md`:
 ````markdown
-# Vostra.Results.Testing
+# Vostra.Result.Testing
 
-Integration-testing toolkit for [Vostra.Results](https://www.nuget.org/packages/Vostra.Results). A
+Integration-testing toolkit for [Vostra.Result](https://www.nuget.org/packages/Vostra.Result). A
 `TestHttpClient` collapses an HTTP round-trip into a `Result<T>`, rebuilding the **typed error** from the
-`Vostra.Results.AspNetCore` response so tests assert error *identity*, not substrings.
+`Vostra.Result.AspNetCore` response so tests assert error *identity*, not substrings.
 
 ```csharp
 var api = new TestHttpClient(httpClient, baseUrl: "products");
@@ -1785,33 +1785,33 @@ var page = await api.GetList<Product>().ShouldBeSuccess();   // page.Items / pag
 
 Open `README.md` and add (place it after the AspNetCore section, mirroring its formatting):
 ```markdown
-## Vostra.Results.Testing
+## Vostra.Result.Testing
 
 Integration-testing toolkit: a `TestHttpClient` returning `Result<T>` with typed-error reconstruction, plus
 zero-dependency fluent assertions (`ShouldBeSuccess`, `ShouldHaveError`, kind sugar). See
-[the package README](src/Vostra.Results.Testing/README.md).
+[the package README](src/Vostra.Result.Testing/README.md).
 ```
 
 - [ ] **Step 3: Build the package to verify README packs**
 
 Run:
 ```bash
-dotnet pack src/Vostra.Results.Testing/Vostra.Results.Testing.csproj -c Release -o ./artifacts
+dotnet pack src/Vostra.Result.Testing/Vostra.Result.Testing.csproj -c Release -o ./artifacts
 ```
-Expected: succeeds; produces `artifacts/Vostra.Results.Testing.<version>.nupkg` with no NU5039 (missing README) warning.
+Expected: succeeds; produces `artifacts/Vostra.Result.Testing.<version>.nupkg` with no NU5039 (missing README) warning.
 
 - [ ] **Step 4: Run the full solution test suite**
 
 Run:
 ```bash
-git restore Vostra.Results.sln 2>/dev/null; dotnet test Vostra.Results.sln
+git restore Vostra.Result.sln 2>/dev/null; dotnet test Vostra.Result.sln
 ```
 Expected: all projects build and all tests pass (Core, AspNetCore, Testing) on net8.0 + net9.0.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/Vostra.Results.Testing/README.md README.md THIRD-PARTY-NOTICES.md
+git add src/Vostra.Result.Testing/README.md README.md THIRD-PARTY-NOTICES.md
 git commit -m "docs(testing): add package README and repo usage docs"
 ```
 

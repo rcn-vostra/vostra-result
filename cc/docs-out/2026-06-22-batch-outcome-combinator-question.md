@@ -1,7 +1,7 @@
 # Design question — a "preserve every per-item outcome" batch combinator
 
 *Self-contained: written so a reader with no access to the repo (e.g. ChatGPT) can give a useful
-second opinion. For an internal reader, the library is `Vostra.Results`.*
+second opinion. For an internal reader, the library is `Vostra.Result`.*
 
 ---
 
@@ -22,7 +22,7 @@ three things:
 
 ## 1. What the library is (just enough context)
 
-`Vostra.Results` is a lean, dependency-free, async-friendly `Result<T>` type for .NET. The opinion baked
+`Vostra.Result` is a lean, dependency-free, async-friendly `Result<T>` type for .NET. The opinion baked
 in: **the happy path is implicit, failure is a typed value, and there is no property that hands you a
 value when the operation failed.**
 

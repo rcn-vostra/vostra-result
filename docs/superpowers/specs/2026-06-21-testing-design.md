@@ -1,4 +1,4 @@
-# Design — `Vostra.Results.Testing` (integration-testing toolkit)
+# Design — `Vostra.Result.Testing` (integration-testing toolkit)
 
 **Status:** Approved for planning · **Date:** 2026-06-21 · **Build order:** Core → AspNetCore → **Testing** (this).
 
@@ -18,7 +18,7 @@ Collapse an HTTP round-trip back into a `Result<T>` so integration tests read as
 the **typed error identity survive the round-trip** — a test asserts `ShouldHaveError("Order.NotFound")` or
 `ShouldHaveError(ErrorType.NotFound)` instead of substring-matching messages (fixes **P2**). Fully async (no
 `.Result`, fixes **P12**) and module-agnostic (fixes **P13**). The package is the *consumer/inverse* of the
-`Vostra.Results.AspNetCore` HTTP response contract.
+`Vostra.Result.AspNetCore` HTTP response contract.
 
 ### Non-goals (this slice)
 - **No** `WebApplicationFactory` convenience adapter — deferred to the **next slice** (the core client takes an
@@ -30,13 +30,13 @@ the **typed error identity survive the round-trip** — a test asserts `ShouldHa
 
 ## 2. Package shape & dependencies
 
-- New project `src/Vostra.Results.Testing/Vostra.Results.Testing.csproj`, TFMs **`net8.0;net9.0`** (parity with
+- New project `src/Vostra.Result.Testing/Vostra.Result.Testing.csproj`, TFMs **`net8.0;net9.0`** (parity with
   Core/AspNetCore; a repo-wide `net10.0` bump is a separate decision — the .NET 10 SDK is now installed).
-- **Runtime dependency:** `Vostra.Results.AspNetCore` (which transitively brings Core **and** the
+- **Runtime dependency:** `Vostra.Result.AspNetCore` (which transitively brings Core **and** the
   `Microsoft.AspNetCore.App` shared framework). `System.Text.Json` is in-box. **No** assertion library,
   **no** Newtonsoft.
 - **NFR-1's Testing dependency clause was removed** (requirements §6, 2026-06-21) in favor of this design.
-  Rationale: this package exists *only* to test an API built with `Vostra.Results.AspNetCore`; it parses that package's exact
+  Rationale: this package exists *only* to test an API built with `Vostra.Result.AspNetCore`; it parses that package's exact
   response contract (envelopes + `problem+json`). So it is already 100% coupled to that contract — the only
   question is whether the coupling is *honest* (reference the package, reuse the real types) or *hidden* (copy
   the DTOs and risk drift). Referencing directly reuses the real `SuccessEnvelope<T>`/`ListEnvelope<T>`/
@@ -55,7 +55,7 @@ the **typed error identity survive the round-trip** — a test asserts `ShouldHa
 
 ---
 
-## 3. The HTTP response contract we consume (from `Vostra.Results.AspNetCore`)
+## 3. The HTTP response contract we consume (from `Vostra.Result.AspNetCore`)
 
 Recorded here so reconstruction never drifts from the producer.
 
@@ -140,7 +140,7 @@ public interface IResultRawFormat
 Single seam carries **both** "which serializer" and "which envelope shape" (FR-11.5). Default
 `RawJsonFormat` uses `System.Text.Json`.
 
-**`ReadData<T>`** — deserializes the **reused** `Vostra.Results.AspNetCore.SuccessEnvelope<T>.data` (scalar) /
+**`ReadData<T>`** — deserializes the **reused** `Vostra.Result.AspNetCore.SuccessEnvelope<T>.data` (scalar) /
 `ListEnvelope<T>` (list) — the exact types the server emits, so the round-trip cannot drift. The valueless
 (non-generic) success path does **not** deserialize an envelope type at all: it confirms the 2xx status and
 returns `Result.Success`/`Result.Created()` (optionally reading `operationId` via a tiny local shape). This
@@ -187,7 +187,7 @@ Task<Result>               Patch(string url, object body, CancellationToken ct =
 Task<Result>               Delete(string url, CancellationToken ct = default);
 Task<Result<T>>            Delete<T>(string url, CancellationToken ct = default);
 
-public sealed record PagedList<T>(IReadOnlyList<T> Items, Pagination Pagination);  // Pagination reused from Vostra.Results.AspNetCore
+public sealed record PagedList<T>(IReadOnlyList<T> Items, Pagination Pagination);  // Pagination reused from Vostra.Result.AspNetCore
 ```
 - **No `where T : class`** — Core/STJ don't need it; keeping it would regress flexibility vs the old helper.
 - **Created/201 recovery:** on a 2xx success the client reads the HTTP status — `201` → `Result.Created<T>(data)`
@@ -195,7 +195,7 @@ public sealed record PagedList<T>(IReadOnlyList<T> Items, Pagination Pagination)
   public `Result.Created<T>` factory).
 - URL joining: `baseUrl` + `url` with documented single-slash normalization (improves on the reference's naive
   concat).
-- `PagedList<T>` wraps the **reused** `Vostra.Results.AspNetCore.Pagination` — no re-declaration, so there is a
+- `PagedList<T>` wraps the **reused** `Vostra.Result.AspNetCore.Pagination` — no re-declaration, so there is a
   single `Pagination` type across both packages (no ambiguous-reference clash in the round-trip tests).
 
 ---

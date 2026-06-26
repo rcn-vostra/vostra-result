@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-26
 **Status:** Approved (brainstorming) → implementing
-**Package:** `Vostra.Results` (Core)
+**Package:** `Vostra.Result` (Core)
 
 ## Problem
 
@@ -18,7 +18,7 @@ already make the *success* side discoverable from the single `Result` entry poin
 
 Add one **static factory per built-in error kind** to the non-generic `Result` struct (which already
 documents itself as *"the single discoverable entry point for explicit factories"*), in a new partial file
-`src/Vostra.Results/Result.Errors.cs`.
+`src/Vostra.Result/Result.Errors.cs`.
 
 | Factory | Returns | `ErrorType` | Default `code` |
 |---|---|---|---|
@@ -98,7 +98,7 @@ existing `new XxxError(...)` form keeps working unchanged — this is additive s
 
 ## Tests (usage-first)
 
-A new `tests/Vostra.Results.Tests/ResultErrorFactoriesTests.cs`:
+A new `tests/Vostra.Result.Tests/ResultErrorFactoriesTests.cs`:
 
 - Each factory produces an error **equal to its hand-`new`'d twin** (covers concrete type, `Type`, `Code`,
   `Message`).
@@ -112,4 +112,4 @@ A new `tests/Vostra.Results.Tests/ResultErrorFactoriesTests.cs`:
 - `README.md` — the headline example → `Result.NotFoundError(...)`.
 - `docs/usage.md` — the example(s) and the "happy path is implicit" note; add a short note on the factory
   surface and the *when-to-supply-a-code* guidance.
-- `src/Vostra.Results/README.md` — mention the discoverable factory surface.
+- `src/Vostra.Result/README.md` — mention the discoverable factory surface.

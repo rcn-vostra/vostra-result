@@ -1,10 +1,10 @@
-# Vostra.Results.AspNetCore Implementation Plan
+# Vostra.Result.AspNetCore Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a `Vostra.Results.AspNetCore` package that maps `Result`/`Result<T>` onto HTTP via `IResult`-returning extension methods, with DI-configured status mapping and an RFC 7807 error wire contract that carries typed-error identity.
+**Goal:** Add a `Vostra.Result.AspNetCore` package that maps `Result`/`Result<T>` onto HTTP via `IResult`-returning extension methods, with DI-configured status mapping and an RFC 7807 error wire contract that carries typed-error identity.
 
-**Architecture:** A new class library `src/Vostra.Results.AspNetCore` referencing only the ASP.NET Core shared framework + Core. Service methods return `Result<T>`; controllers/minimal-API handlers call `result.ToHttpResponse(HttpContext)`. Success → a thin `{ operationId, data }` envelope (200/201 from `SuccessKind`); failure → a hand-built `ProblemDetails`/`HttpValidationProblemDetails` carrying `code` + `errorType` + `operationId`. Status comes from the error via a DI-configured, open/closed map (no central switch).
+**Architecture:** A new class library `src/Vostra.Result.AspNetCore` referencing only the ASP.NET Core shared framework + Core. Service methods return `Result<T>`; controllers/minimal-API handlers call `result.ToHttpResponse(HttpContext)`. Success → a thin `{ operationId, data }` envelope (200/201 from `SuccessKind`); failure → a hand-built `ProblemDetails`/`HttpValidationProblemDetails` carrying `code` + `errorType` + `operationId`. Status comes from the error via a DI-configured, open/closed map (no central switch).
 
 **Tech Stack:** C# (LangVersion latest), net8.0;net9.0, ASP.NET Core (`FrameworkReference Microsoft.AspNetCore.App`), System.Text.Json, xUnit 2.5.3 + FluentAssertions 8.10.0.
 
@@ -13,9 +13,9 @@
 ## Global Constraints
 
 - Target frameworks: `net8.0;net9.0` (every project).
-- Dependencies: AspNetCore project references **only** `FrameworkReference Microsoft.AspNetCore.App` + `ProjectReference` to `Vostra.Results`. No other runtime NuGet packages. Core stays HTTP-free (do not touch `src/Vostra.Results`).
+- Dependencies: AspNetCore project references **only** `FrameworkReference Microsoft.AspNetCore.App` + `ProjectReference` to `Vostra.Result`. No other runtime NuGet packages. Core stays HTTP-free (do not touch `src/Vostra.Result`).
 - `Directory.Build.props` is inherited: `Nullable=enable`, `ImplicitUsings=enable`, `TreatWarningsAsErrors=true`, `EnforceCodeStyleInBuild=true`. **Every public member needs an XML `///` doc comment** (the library project sets `GenerateDocumentationFile=true`; a missing doc is CS1591 = build error).
-- File-scoped namespaces; namespace `Vostra.Results.AspNetCore`.
+- File-scoped namespaces; namespace `Vostra.Result.AspNetCore`.
 - Serializer: System.Text.Json. Wire property names are camelCase — set them explicitly with `[JsonPropertyName]` (do not rely on global naming policy).
 - Error bodies use content type `application/problem+json`; success bodies use `application/json`.
 - **Commit message rule (from CLAUDE.md): never include any `Co-Authored-By` / Claude / AI attribution line in commits.** Plain conventional-commit messages only.
@@ -44,33 +44,33 @@ sections below are superseded by it.
 ### Task 1: Scaffold project, test project, solution wiring
 
 **Files:**
-- Create: `src/Vostra.Results.AspNetCore/Vostra.Results.AspNetCore.csproj`
-- Create: `tests/Vostra.Results.AspNetCore.Tests/Vostra.Results.AspNetCore.Tests.csproj`
-- Create: `tests/Vostra.Results.AspNetCore.Tests/GlobalUsings.cs`
-- Create: `tests/Vostra.Results.AspNetCore.Tests/ScaffoldSmokeTests.cs`
-- Modify: `Vostra.Results.sln` (add both projects)
+- Create: `src/Vostra.Result.AspNetCore/Vostra.Result.AspNetCore.csproj`
+- Create: `tests/Vostra.Result.AspNetCore.Tests/Vostra.Result.AspNetCore.Tests.csproj`
+- Create: `tests/Vostra.Result.AspNetCore.Tests/GlobalUsings.cs`
+- Create: `tests/Vostra.Result.AspNetCore.Tests/ScaffoldSmokeTests.cs`
+- Modify: `Vostra.Result.sln` (add both projects)
 
 **Interfaces:**
-- Consumes: the existing `Vostra.Results` project.
-- Produces: a buildable `Vostra.Results.AspNetCore` assembly + a test project that references it.
+- Consumes: the existing `Vostra.Result` project.
+- Produces: a buildable `Vostra.Result.AspNetCore` assembly + a test project that references it.
 
 - [ ] **Step 1: Create the library csproj**
 
-`src/Vostra.Results.AspNetCore/Vostra.Results.AspNetCore.csproj`:
+`src/Vostra.Result.AspNetCore/Vostra.Result.AspNetCore.csproj`:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageId>Vostra.Results.AspNetCore</PackageId>
-    <Description>ASP.NET Core HTTP mapping for Vostra.Results — Result&lt;T&gt; to IResult with RFC 7807 ProblemDetails.</Description>
+    <PackageId>Vostra.Result.AspNetCore</PackageId>
+    <Description>ASP.NET Core HTTP mapping for Vostra.Result — Result&lt;T&gt; to IResult with RFC 7807 ProblemDetails.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <ProjectReference Include="..\Vostra.Results\Vostra.Results.csproj" />
+    <ProjectReference Include="..\Vostra.Result\Vostra.Result.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -81,7 +81,7 @@ sections below are superseded by it.
 
 - [ ] **Step 2: Create the test csproj**
 
-`tests/Vostra.Results.AspNetCore.Tests/Vostra.Results.AspNetCore.Tests.csproj`:
+`tests/Vostra.Result.AspNetCore.Tests/Vostra.Result.AspNetCore.Tests.csproj`:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -103,7 +103,7 @@ sections below are superseded by it.
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Vostra.Results.AspNetCore\Vostra.Results.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\Vostra.Result.AspNetCore\Vostra.Result.AspNetCore.csproj" />
   </ItemGroup>
 </Project>
 ```
@@ -112,21 +112,21 @@ Note: the test project needs `FrameworkReference Microsoft.AspNetCore.App` so te
 
 - [ ] **Step 3: Create test GlobalUsings**
 
-`tests/Vostra.Results.AspNetCore.Tests/GlobalUsings.cs`:
+`tests/Vostra.Result.AspNetCore.Tests/GlobalUsings.cs`:
 
 ```csharp
 global using FluentAssertions;
-global using Vostra.Results;
-global using Vostra.Results.AspNetCore;
+global using Vostra.Result;
+global using Vostra.Result.AspNetCore;
 global using Xunit;
 ```
 
 - [ ] **Step 4: Write the smoke test**
 
-`tests/Vostra.Results.AspNetCore.Tests/ScaffoldSmokeTests.cs`:
+`tests/Vostra.Result.AspNetCore.Tests/ScaffoldSmokeTests.cs`:
 
 ```csharp
-namespace Vostra.Results.AspNetCore.Tests;
+namespace Vostra.Result.AspNetCore.Tests;
 
 public class ScaffoldSmokeTests
 {
@@ -143,20 +143,20 @@ public class ScaffoldSmokeTests
 
 Run:
 ```bash
-dotnet sln Vostra.Results.sln add src/Vostra.Results.AspNetCore/Vostra.Results.AspNetCore.csproj
-dotnet sln Vostra.Results.sln add tests/Vostra.Results.AspNetCore.Tests/Vostra.Results.AspNetCore.Tests.csproj
+dotnet sln Vostra.Result.sln add src/Vostra.Result.AspNetCore/Vostra.Result.AspNetCore.csproj
+dotnet sln Vostra.Result.sln add tests/Vostra.Result.AspNetCore.Tests/Vostra.Result.AspNetCore.Tests.csproj
 ```
 
 - [ ] **Step 6: Build and run the smoke test**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests/Vostra.Results.AspNetCore.Tests.csproj`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests/Vostra.Result.AspNetCore.Tests.csproj`
 Expected: build succeeds, 1 test passes (×2 frameworks).
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add src/Vostra.Results.AspNetCore tests/Vostra.Results.AspNetCore.Tests Vostra.Results.sln
-git commit -m "feat(aspnetcore): scaffold Vostra.Results.AspNetCore project and tests"
+git add src/Vostra.Result.AspNetCore tests/Vostra.Result.AspNetCore.Tests Vostra.Result.sln
+git commit -m "feat(aspnetcore): scaffold Vostra.Result.AspNetCore project and tests"
 ```
 
 ---
@@ -164,8 +164,8 @@ git commit -m "feat(aspnetcore): scaffold Vostra.Results.AspNetCore project and 
 ### Task 2: Envelopes and Pagination
 
 **Files:**
-- Create: `src/Vostra.Results.AspNetCore/Envelopes.cs`
-- Test: `tests/Vostra.Results.AspNetCore.Tests/EnvelopeTests.cs`
+- Create: `src/Vostra.Result.AspNetCore/Envelopes.cs`
+- Test: `tests/Vostra.Result.AspNetCore.Tests/EnvelopeTests.cs`
 
 **Interfaces:**
 - Produces:
@@ -175,12 +175,12 @@ git commit -m "feat(aspnetcore): scaffold Vostra.Results.AspNetCore project and 
 
 - [ ] **Step 1: Write the failing test**
 
-`tests/Vostra.Results.AspNetCore.Tests/EnvelopeTests.cs`:
+`tests/Vostra.Result.AspNetCore.Tests/EnvelopeTests.cs`:
 
 ```csharp
 using System.Text.Json;
 
-namespace Vostra.Results.AspNetCore.Tests;
+namespace Vostra.Result.AspNetCore.Tests;
 
 public class EnvelopeTests
 {
@@ -222,17 +222,17 @@ public class EnvelopeTests
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests --filter EnvelopeTests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests --filter EnvelopeTests`
 Expected: FAIL (types `Pagination`/`SuccessEnvelope`/`ListEnvelope` not found).
 
 - [ ] **Step 3: Implement the envelopes**
 
-`src/Vostra.Results.AspNetCore/Envelopes.cs`:
+`src/Vostra.Result.AspNetCore/Envelopes.cs`:
 
 ```csharp
 using System.Text.Json.Serialization;
 
-namespace Vostra.Results.AspNetCore;
+namespace Vostra.Result.AspNetCore;
 
 /// <summary>Pagination metadata for a list response.</summary>
 /// <param name="Page">1-based page number.</param>
@@ -282,13 +282,13 @@ public sealed class ListEnvelope<T>
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests --filter EnvelopeTests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests --filter EnvelopeTests`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/Vostra.Results.AspNetCore/Envelopes.cs tests/Vostra.Results.AspNetCore.Tests/EnvelopeTests.cs
+git add src/Vostra.Result.AspNetCore/Envelopes.cs tests/Vostra.Result.AspNetCore.Tests/EnvelopeTests.cs
 git commit -m "feat(aspnetcore): add SuccessEnvelope, ListEnvelope, Pagination"
 ```
 
@@ -297,13 +297,13 @@ git commit -m "feat(aspnetcore): add SuccessEnvelope, ListEnvelope, Pagination"
 ### Task 3: Default status map, options, and status resolver
 
 **Files:**
-- Create: `src/Vostra.Results.AspNetCore/DefaultStatusMap.cs`
-- Create: `src/Vostra.Results.AspNetCore/VostraResultsOptions.cs`
-- Create: `src/Vostra.Results.AspNetCore/ErrorStatusResolver.cs`
-- Test: `tests/Vostra.Results.AspNetCore.Tests/StatusResolutionTests.cs`
+- Create: `src/Vostra.Result.AspNetCore/DefaultStatusMap.cs`
+- Create: `src/Vostra.Result.AspNetCore/VostraResultsOptions.cs`
+- Create: `src/Vostra.Result.AspNetCore/ErrorStatusResolver.cs`
+- Test: `tests/Vostra.Result.AspNetCore.Tests/StatusResolutionTests.cs`
 
 **Interfaces:**
-- Consumes: `Vostra.Results.ErrorType`, `Vostra.Results.ErrorBase`.
+- Consumes: `Vostra.Result.ErrorType`, `Vostra.Result.ErrorBase`.
 - Produces:
   - `public static class DefaultStatusMap { public static int ForType(ErrorType type); public static IReadOnlyDictionary<ErrorType,int> Defaults { get; } }`
   - `public sealed class VostraResultsOptions { public static VostraResultsOptions Default { get; } public VostraResultsOptions MapStatus(ErrorType type, int status); public VostraResultsOptions MapStatusForCode(string code, int status); internal int ResolveStatus(ErrorBase error); }`
@@ -311,10 +311,10 @@ git commit -m "feat(aspnetcore): add SuccessEnvelope, ListEnvelope, Pagination"
 
 - [ ] **Step 1: Write the failing test**
 
-`tests/Vostra.Results.AspNetCore.Tests/StatusResolutionTests.cs`:
+`tests/Vostra.Result.AspNetCore.Tests/StatusResolutionTests.cs`:
 
 ```csharp
-namespace Vostra.Results.AspNetCore.Tests;
+namespace Vostra.Result.AspNetCore.Tests;
 
 public class StatusResolutionTests
 {
@@ -370,15 +370,15 @@ public class StatusResolutionTests
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests --filter StatusResolutionTests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests --filter StatusResolutionTests`
 Expected: FAIL (types not found).
 
 - [ ] **Step 3: Implement DefaultStatusMap**
 
-`src/Vostra.Results.AspNetCore/DefaultStatusMap.cs`:
+`src/Vostra.Result.AspNetCore/DefaultStatusMap.cs`:
 
 ```csharp
-namespace Vostra.Results.AspNetCore;
+namespace Vostra.Result.AspNetCore;
 
 /// <summary>
 /// The built-in <see cref="ErrorType"/> → HTTP status map. This is the shared contract the
@@ -406,10 +406,10 @@ public static class DefaultStatusMap
 
 - [ ] **Step 4: Implement VostraResultsOptions**
 
-`src/Vostra.Results.AspNetCore/VostraResultsOptions.cs`:
+`src/Vostra.Result.AspNetCore/VostraResultsOptions.cs`:
 
 ```csharp
-namespace Vostra.Results.AspNetCore;
+namespace Vostra.Result.AspNetCore;
 
 /// <summary>
 /// Configuration for HTTP mapping. Override the status for a whole <see cref="ErrorType"/>
@@ -452,10 +452,10 @@ public sealed class VostraResultsOptions
 
 - [ ] **Step 5: Implement ErrorStatusResolver**
 
-`src/Vostra.Results.AspNetCore/ErrorStatusResolver.cs`:
+`src/Vostra.Result.AspNetCore/ErrorStatusResolver.cs`:
 
 ```csharp
-namespace Vostra.Results.AspNetCore;
+namespace Vostra.Result.AspNetCore;
 
 /// <summary>Resolves an <see cref="ErrorBase"/> to an HTTP status using the supplied options.</summary>
 public static class ErrorStatusResolver
@@ -467,13 +467,13 @@ public static class ErrorStatusResolver
 
 - [ ] **Step 6: Run test to verify it passes**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests --filter StatusResolutionTests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests --filter StatusResolutionTests`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add src/Vostra.Results.AspNetCore/DefaultStatusMap.cs src/Vostra.Results.AspNetCore/VostraResultsOptions.cs src/Vostra.Results.AspNetCore/ErrorStatusResolver.cs tests/Vostra.Results.AspNetCore.Tests/StatusResolutionTests.cs
+git add src/Vostra.Result.AspNetCore/DefaultStatusMap.cs src/Vostra.Result.AspNetCore/VostraResultsOptions.cs src/Vostra.Result.AspNetCore/ErrorStatusResolver.cs tests/Vostra.Result.AspNetCore.Tests/StatusResolutionTests.cs
 git commit -m "feat(aspnetcore): add status map, options, and resolver with precedence"
 ```
 
@@ -482,8 +482,8 @@ git commit -m "feat(aspnetcore): add status map, options, and resolver with prec
 ### Task 4: AddVostraResults DI registration
 
 **Files:**
-- Create: `src/Vostra.Results.AspNetCore/ServiceCollectionExtensions.cs`
-- Test: `tests/Vostra.Results.AspNetCore.Tests/ServiceRegistrationTests.cs`
+- Create: `src/Vostra.Result.AspNetCore/ServiceCollectionExtensions.cs`
+- Test: `tests/Vostra.Result.AspNetCore.Tests/ServiceRegistrationTests.cs`
 
 **Interfaces:**
 - Consumes: `VostraResultsOptions` (Task 3), `Microsoft.Extensions.DependencyInjection.IServiceCollection`.
@@ -491,12 +491,12 @@ git commit -m "feat(aspnetcore): add status map, options, and resolver with prec
 
 - [ ] **Step 1: Write the failing test**
 
-`tests/Vostra.Results.AspNetCore.Tests/ServiceRegistrationTests.cs`:
+`tests/Vostra.Result.AspNetCore.Tests/ServiceRegistrationTests.cs`:
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Vostra.Results.AspNetCore.Tests;
+namespace Vostra.Result.AspNetCore.Tests;
 
 public class ServiceRegistrationTests
 {
@@ -524,19 +524,19 @@ public class ServiceRegistrationTests
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests --filter ServiceRegistrationTests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests --filter ServiceRegistrationTests`
 Expected: FAIL (`AddVostraResults` not found).
 
 - [ ] **Step 3: Implement the extension**
 
-`src/Vostra.Results.AspNetCore/ServiceCollectionExtensions.cs`:
+`src/Vostra.Result.AspNetCore/ServiceCollectionExtensions.cs`:
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Vostra.Results.AspNetCore;
+namespace Vostra.Result.AspNetCore;
 
-/// <summary>DI registration for Vostra.Results HTTP mapping.</summary>
+/// <summary>DI registration for Vostra.Result HTTP mapping.</summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
@@ -557,13 +557,13 @@ public static class ServiceCollectionExtensions
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests --filter ServiceRegistrationTests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests --filter ServiceRegistrationTests`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/Vostra.Results.AspNetCore/ServiceCollectionExtensions.cs tests/Vostra.Results.AspNetCore.Tests/ServiceRegistrationTests.cs
+git add src/Vostra.Result.AspNetCore/ServiceCollectionExtensions.cs tests/Vostra.Result.AspNetCore.Tests/ServiceRegistrationTests.cs
 git commit -m "feat(aspnetcore): add AddVostraResults DI registration"
 ```
 
@@ -572,8 +572,8 @@ git commit -m "feat(aspnetcore): add AddVostraResults DI registration"
 ### Task 5: OperationId helper
 
 **Files:**
-- Create: `src/Vostra.Results.AspNetCore/OperationId.cs`
-- Test: `tests/Vostra.Results.AspNetCore.Tests/OperationIdTests.cs`
+- Create: `src/Vostra.Result.AspNetCore/OperationId.cs`
+- Test: `tests/Vostra.Result.AspNetCore.Tests/OperationIdTests.cs`
 
 **Interfaces:**
 - Consumes: `Microsoft.AspNetCore.Http.HttpContext`.
@@ -583,23 +583,23 @@ Note: `OperationId` is `internal`. Add `InternalsVisibleTo` so the test project 
 
 - [ ] **Step 1: Add InternalsVisibleTo to the library**
 
-Append to `src/Vostra.Results.AspNetCore/Vostra.Results.AspNetCore.csproj` inside a new `<ItemGroup>`:
+Append to `src/Vostra.Result.AspNetCore/Vostra.Result.AspNetCore.csproj` inside a new `<ItemGroup>`:
 
 ```xml
   <ItemGroup>
-    <InternalsVisibleTo Include="Vostra.Results.AspNetCore.Tests" />
+    <InternalsVisibleTo Include="Vostra.Result.AspNetCore.Tests" />
   </ItemGroup>
 ```
 
 - [ ] **Step 2: Write the failing test**
 
-`tests/Vostra.Results.AspNetCore.Tests/OperationIdTests.cs`:
+`tests/Vostra.Result.AspNetCore.Tests/OperationIdTests.cs`:
 
 ```csharp
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 
-namespace Vostra.Results.AspNetCore.Tests;
+namespace Vostra.Result.AspNetCore.Tests;
 
 public class OperationIdTests
 {
@@ -632,18 +632,18 @@ public class OperationIdTests
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests --filter OperationIdTests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests --filter OperationIdTests`
 Expected: FAIL (`OperationId` not found).
 
 - [ ] **Step 4: Implement the helper**
 
-`src/Vostra.Results.AspNetCore/OperationId.cs`:
+`src/Vostra.Result.AspNetCore/OperationId.cs`:
 
 ```csharp
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 
-namespace Vostra.Results.AspNetCore;
+namespace Vostra.Result.AspNetCore;
 
 /// <summary>Computes the operation/correlation id stamped onto every response body.</summary>
 internal static class OperationId
@@ -655,13 +655,13 @@ internal static class OperationId
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests --filter OperationIdTests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests --filter OperationIdTests`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/Vostra.Results.AspNetCore/Vostra.Results.AspNetCore.csproj src/Vostra.Results.AspNetCore/OperationId.cs tests/Vostra.Results.AspNetCore.Tests/OperationIdTests.cs
+git add src/Vostra.Result.AspNetCore/Vostra.Result.AspNetCore.csproj src/Vostra.Result.AspNetCore/OperationId.cs tests/Vostra.Result.AspNetCore.Tests/OperationIdTests.cs
 git commit -m "feat(aspnetcore): add operation id helper"
 ```
 
@@ -670,9 +670,9 @@ git commit -m "feat(aspnetcore): add operation id helper"
 ### Task 6: ProblemResultBuilder (error IResult)
 
 **Files:**
-- Create: `src/Vostra.Results.AspNetCore/ProblemResultBuilder.cs`
-- Create: `tests/Vostra.Results.AspNetCore.Tests/HttpResultHarness.cs` (shared test helper)
-- Test: `tests/Vostra.Results.AspNetCore.Tests/ProblemResultBuilderTests.cs`
+- Create: `src/Vostra.Result.AspNetCore/ProblemResultBuilder.cs`
+- Create: `tests/Vostra.Result.AspNetCore.Tests/HttpResultHarness.cs` (shared test helper)
+- Test: `tests/Vostra.Result.AspNetCore.Tests/ProblemResultBuilderTests.cs`
 
 **Interfaces:**
 - Consumes: `ErrorBase`, `ErrorType`, `VostraResultsOptions`, `ErrorStatusResolver`.
@@ -682,14 +682,14 @@ git commit -m "feat(aspnetcore): add operation id helper"
 
 - [ ] **Step 1: Write the shared HTTP result harness**
 
-`tests/Vostra.Results.AspNetCore.Tests/HttpResultHarness.cs`:
+`tests/Vostra.Result.AspNetCore.Tests/HttpResultHarness.cs`:
 
 ```csharp
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Vostra.Results.AspNetCore.Tests;
+namespace Vostra.Result.AspNetCore.Tests;
 
 /// <summary>Executes an <see cref="IResult"/> against a real <see cref="DefaultHttpContext"/> and captures it.</summary>
 internal static class HttpResultHarness
@@ -718,12 +718,12 @@ internal sealed record ExecutedResponse(int Status, string? ContentType, string 
 
 - [ ] **Step 2: Write the failing test**
 
-`tests/Vostra.Results.AspNetCore.Tests/ProblemResultBuilderTests.cs`:
+`tests/Vostra.Result.AspNetCore.Tests/ProblemResultBuilderTests.cs`:
 
 ```csharp
 using System.Text.Json;
 
-namespace Vostra.Results.AspNetCore.Tests;
+namespace Vostra.Result.AspNetCore.Tests;
 
 public class ProblemResultBuilderTests
 {
@@ -812,19 +812,19 @@ public class ProblemResultBuilderTests
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests --filter ProblemResultBuilderTests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests --filter ProblemResultBuilderTests`
 Expected: FAIL (`ProblemResultBuilder` not found).
 
 - [ ] **Step 4: Implement ProblemResultBuilder**
 
-`src/Vostra.Results.AspNetCore/ProblemResultBuilder.cs`:
+`src/Vostra.Result.AspNetCore/ProblemResultBuilder.cs`:
 
 ```csharp
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Vostra.Results.AspNetCore;
+namespace Vostra.Result.AspNetCore;
 
 /// <summary>Builds the RFC 7807 error <see cref="IResult"/> from one or more errors.</summary>
 internal static class ProblemResultBuilder
@@ -929,13 +929,13 @@ Note: `ProblemDetails` lives in `Microsoft.AspNetCore.Mvc`; `HttpValidationProbl
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests --filter ProblemResultBuilderTests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests --filter ProblemResultBuilderTests`
 Expected: PASS (all four tests).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/Vostra.Results.AspNetCore/ProblemResultBuilder.cs tests/Vostra.Results.AspNetCore.Tests/HttpResultHarness.cs tests/Vostra.Results.AspNetCore.Tests/ProblemResultBuilderTests.cs
+git add src/Vostra.Result.AspNetCore/ProblemResultBuilder.cs tests/Vostra.Result.AspNetCore.Tests/HttpResultHarness.cs tests/Vostra.Result.AspNetCore.Tests/ProblemResultBuilderTests.cs
 git commit -m "feat(aspnetcore): build RFC 7807 problem responses with code and errorType"
 ```
 
@@ -944,8 +944,8 @@ git commit -m "feat(aspnetcore): build RFC 7807 problem responses with code and 
 ### Task 7: ToHttpResponse extension methods
 
 **Files:**
-- Create: `src/Vostra.Results.AspNetCore/ToHttpResponseExtensions.cs`
-- Test: `tests/Vostra.Results.AspNetCore.Tests/ToHttpResponseTests.cs`
+- Create: `src/Vostra.Result.AspNetCore/ToHttpResponseExtensions.cs`
+- Test: `tests/Vostra.Result.AspNetCore.Tests/ToHttpResponseTests.cs`
 
 **Interfaces:**
 - Consumes: `Result<T>`, `Result`, `SuccessKind`, `SuccessEnvelope<T>`, `ListEnvelope<T>`, `Pagination`, `ProblemResultBuilder`, `OperationId`, `VostraResultsOptions`.
@@ -957,14 +957,14 @@ git commit -m "feat(aspnetcore): build RFC 7807 problem responses with code and 
 
 - [ ] **Step 1: Write the failing test**
 
-`tests/Vostra.Results.AspNetCore.Tests/ToHttpResponseTests.cs`:
+`tests/Vostra.Result.AspNetCore.Tests/ToHttpResponseTests.cs`:
 
 ```csharp
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Vostra.Results.AspNetCore.Tests;
+namespace Vostra.Result.AspNetCore.Tests;
 
 public class ToHttpResponseTests
 {
@@ -1067,18 +1067,18 @@ public class ToHttpResponseTests
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests --filter ToHttpResponseTests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests --filter ToHttpResponseTests`
 Expected: FAIL (`ToHttpResponse` not found).
 
 - [ ] **Step 3: Implement the extensions**
 
-`src/Vostra.Results.AspNetCore/ToHttpResponseExtensions.cs`:
+`src/Vostra.Result.AspNetCore/ToHttpResponseExtensions.cs`:
 
 ```csharp
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Vostra.Results.AspNetCore;
+namespace Vostra.Result.AspNetCore;
 
 /// <summary>Maps <see cref="Result"/>/<see cref="Result{T}"/> onto an HTTP <see cref="IResult"/>.</summary>
 public static class ToHttpResponseExtensions
@@ -1136,18 +1136,18 @@ public static class ToHttpResponseExtensions
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests --filter ToHttpResponseTests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests --filter ToHttpResponseTests`
 Expected: PASS (all seven tests).
 
 - [ ] **Step 5: Run the whole suite**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests`
 Expected: PASS (all tasks' tests, ×2 frameworks).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/Vostra.Results.AspNetCore/ToHttpResponseExtensions.cs tests/Vostra.Results.AspNetCore.Tests/ToHttpResponseTests.cs
+git add src/Vostra.Result.AspNetCore/ToHttpResponseExtensions.cs tests/Vostra.Result.AspNetCore.Tests/ToHttpResponseTests.cs
 git commit -m "feat(aspnetcore): add ToHttpResponse extensions for Result and Result<T>"
 ```
 
@@ -1156,21 +1156,21 @@ git commit -m "feat(aspnetcore): add ToHttpResponse extensions for Result and Re
 ### Task 8: FR-11.3 round-trip readiness test + usage-style call-site test
 
 **Files:**
-- Test: `tests/Vostra.Results.AspNetCore.Tests/WireContractTests.cs`
+- Test: `tests/Vostra.Result.AspNetCore.Tests/WireContractTests.cs`
 
 **Interfaces:**
 - Consumes: everything above. No production code — this task proves the wire contract is sufficient for the Testing package and that call-sites read naturally (acceptance §10.1, §10.4a).
 
 - [ ] **Step 1: Write the round-trip + usage test**
 
-`tests/Vostra.Results.AspNetCore.Tests/WireContractTests.cs`:
+`tests/Vostra.Result.AspNetCore.Tests/WireContractTests.cs`:
 
 ```csharp
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Vostra.Results.AspNetCore.Tests;
+namespace Vostra.Result.AspNetCore.Tests;
 
 public class WireContractTests
 {
@@ -1215,13 +1215,13 @@ public class WireContractTests
 
 - [ ] **Step 2: Run the test**
 
-Run: `dotnet test tests/Vostra.Results.AspNetCore.Tests --filter WireContractTests`
+Run: `dotnet test tests/Vostra.Result.AspNetCore.Tests --filter WireContractTests`
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add tests/Vostra.Results.AspNetCore.Tests/WireContractTests.cs
+git add tests/Vostra.Result.AspNetCore.Tests/WireContractTests.cs
 git commit -m "test(aspnetcore): prove wire contract carries typed-error identity"
 ```
 
@@ -1230,26 +1230,26 @@ git commit -m "test(aspnetcore): prove wire contract carries typed-error identit
 ### Task 9: Documentation (package README + repo README section)
 
 **Files:**
-- Create: `src/Vostra.Results.AspNetCore/README.md`
+- Create: `src/Vostra.Result.AspNetCore/README.md`
 - Modify: `README.md` (repo root — add an AspNetCore section; if the root README does not exist, create it with a short library overview + this section)
 
 **Interfaces:** none (docs only). Must match the actual public surface shipped in Tasks 1–7.
 
 - [ ] **Step 1: Write the package README**
 
-`src/Vostra.Results.AspNetCore/README.md`:
+`src/Vostra.Result.AspNetCore/README.md`:
 
 ````markdown
-# Vostra.Results.AspNetCore
+# Vostra.Result.AspNetCore
 
-ASP.NET Core HTTP mapping for [Vostra.Results](https://www.nuget.org/packages/Vostra.Results): turn a
+ASP.NET Core HTTP mapping for [Vostra.Result](https://www.nuget.org/packages/Vostra.Result): turn a
 `Result`/`Result<T>` into an HTTP response with one extension method. Works in minimal APIs and MVC
 controllers — no base class.
 
 ## Install
 
 ```bash
-dotnet add package Vostra.Results.AspNetCore
+dotnet add package Vostra.Result.AspNetCore
 ```
 
 ## Setup (optional)
@@ -1337,15 +1337,15 @@ Validation errors (all `ErrorType.Validation`) render a field → messages map (
 - [ ] **Step 2: Add the AspNetCore section to the repo-root README**
 
 If `README.md` exists at the repo root, add this section after the Core description. If it does not exist,
-create `README.md` with a one-paragraph overview of the `Vostra.Results` family and then this section:
+create `README.md` with a one-paragraph overview of the `Vostra.Result` family and then this section:
 
 ```markdown
-## Vostra.Results.AspNetCore
+## Vostra.Result.AspNetCore
 
 HTTP mapping for `Result`/`Result<T>`: `result.ToHttpResponse(HttpContext)` returns an `IResult` with a thin
 success envelope or an RFC 7807 `ProblemDetails` error carrying `code` + `errorType`. Status comes from the
 error via a DI-configured, open/closed map. See
-[src/Vostra.Results.AspNetCore/README.md](src/Vostra.Results.AspNetCore/README.md).
+[src/Vostra.Result.AspNetCore/README.md](src/Vostra.Result.AspNetCore/README.md).
 ```
 
 - [ ] **Step 3: Verify docs match the shipped API**
@@ -1356,13 +1356,13 @@ Re-read the package README against `ToHttpResponseExtensions.cs`, `ServiceCollec
 
 - [ ] **Step 4: Build to confirm README packs (no broken csproj)**
 
-Run: `dotnet build src/Vostra.Results.AspNetCore/Vostra.Results.AspNetCore.csproj`
+Run: `dotnet build src/Vostra.Result.AspNetCore/Vostra.Result.AspNetCore.csproj`
 Expected: build succeeds (the `PackageReadmeFile`/`None Include="README.md"` now resolves).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/Vostra.Results.AspNetCore/README.md README.md
+git add src/Vostra.Result.AspNetCore/README.md README.md
 git commit -m "docs(aspnetcore): add package and repo README usage docs"
 ```
 
@@ -1374,17 +1374,17 @@ git commit -m "docs(aspnetcore): add package and repo README usage docs"
 
 - [ ] **Step 1: Full solution build + test**
 
-Run: `dotnet test Vostra.Results.sln`
+Run: `dotnet test Vostra.Result.sln`
 Expected: all Core tests (74) + all AspNetCore tests pass, on both net8.0 and net9.0, zero warnings (TreatWarningsAsErrors).
 
 - [ ] **Step 2: Confirm dependency hygiene (NFR-1)**
 
-Run: `dotnet list src/Vostra.Results.AspNetCore/Vostra.Results.AspNetCore.csproj package`
-Expected: no transitive NuGet runtime packages beyond the framework reference; only the `Vostra.Results` project reference. (FrameworkReference does not appear as a package — that's expected.)
+Run: `dotnet list src/Vostra.Result.AspNetCore/Vostra.Result.AspNetCore.csproj package`
+Expected: no transitive NuGet runtime packages beyond the framework reference; only the `Vostra.Result` project reference. (FrameworkReference does not appear as a package — that's expected.)
 
 - [ ] **Step 3: Confirm Core stayed HTTP-free**
 
-Run: `git diff --stat main -- src/Vostra.Results`
+Run: `git diff --stat main -- src/Vostra.Result`
 Expected: empty (no changes to Core).
 
 - [ ] **Step 4: Update memory pointer**

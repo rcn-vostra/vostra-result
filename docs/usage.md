@@ -1,21 +1,21 @@
-# Vostra.Results — Usage Guide
+# Vostra.Result — Usage Guide
 
 Most C# error handling forces a bad trade: throw exceptions for expected failures (and pay for stack
 unwinding, lose the compiler's help, and scatter `try/catch`), or return flags and out-parameters (and
-reason about `null` everywhere). `Vostra.Results` takes a third path — **errors are ordinary values** that
+reason about `null` everywhere). `Vostra.Result` takes a third path — **errors are ordinary values** that
 the type system tracks for you. Three small packages share one idea: **the happy path is implicit, the
 failure path is typed, and a value only exists where it's actually valid.**
 
-- **Vostra.Results** — the `Result<T>` type itself. Zero dependencies, zero happy-path allocation.
-- **Vostra.Results.AspNetCore** — turn a `Result` into the right HTTP response, automatically.
-- **Vostra.Results.Testing** — transport-neutral chain & assert over any `Task<Result<T>>`; tests read like domain scripts.
-- **Vostra.Results.AspNetCore.Testing** — turn an HTTP response back into a `Result` (the `TestHttpClient`).
+- **Vostra.Result** — the `Result<T>` type itself. Zero dependencies, zero happy-path allocation.
+- **Vostra.Result.AspNetCore** — turn a `Result` into the right HTTP response, automatically.
+- **Vostra.Result.Testing** — transport-neutral chain & assert over any `Task<Result<T>>`; tests read like domain scripts.
+- **Vostra.Result.AspNetCore.Testing** — turn an HTTP response back into a `Result` (the `TestHttpClient`).
 
 ```bash
-dotnet add package Vostra.Results                    # the type
-dotnet add package Vostra.Results.AspNetCore         # Result -> HTTP
-dotnet add package Vostra.Results.Testing            # chain & assert over any Task<Result<T>> (tests)
-dotnet add package Vostra.Results.AspNetCore.Testing # HTTP -> Result test client
+dotnet add package Vostra.Result                    # the type
+dotnet add package Vostra.Result.AspNetCore         # Result -> HTTP
+dotnet add package Vostra.Result.Testing            # chain & assert over any Task<Result<T>> (tests)
+dotnet add package Vostra.Result.AspNetCore.Testing # HTTP -> Result test client
 ```
 
 ---
@@ -273,7 +273,7 @@ Result<int, int> b = Result<int, int>.Second(0);   // arm 2  (a != b)
 
 ---
 
-## 2. Vostra.Results.AspNetCore — `Result` → HTTP
+## 2. Vostra.Result.AspNetCore — `Result` → HTTP
 
 This is where errors-as-values pays off at the edge: one call turns any `Result` into the correct HTTP
 response — success envelope or RFC 7807 `ProblemDetails` — with the status derived from the error itself.
@@ -337,7 +337,7 @@ builder.Services.AddVostraResults(o => o
 
 ---
 
-## 3. Vostra.Results.Testing — chain & assert over any `Task<Result<T>>`
+## 3. Vostra.Result.Testing — chain & assert over any `Task<Result<T>>`
 
 The test-composition layer is **transport-neutral**: `Then` (from Core) chains steps that each return
 `Result<T>`/`Task<Result<T>>`, running the next only if the previous succeeded; the `ShouldBe…`/`Assert`
@@ -360,9 +360,9 @@ return new ExternalRefusalError("contractor rejected line 4")
 // an assertion failure then renders:  request: SEND wo-inbound | body: WorkOrder { ... }
 ```
 
-### HTTP adapter — `Vostra.Results.AspNetCore.Testing`
+### HTTP adapter — `Vostra.Result.AspNetCore.Testing`
 
-For ASP.NET Core APIs, the `Vostra.Results.AspNetCore.Testing` package adds `TestHttpClient`, which collapses
+For ASP.NET Core APIs, the `Vostra.Result.AspNetCore.Testing` package adds `TestHttpClient`, which collapses
 the HTTP round-trip back into a `Result<T>` and **rebuilds the typed error** from the RFC 7807 body — so the
 same chain-and-assert layer reads as a domain script over your endpoints, asserting on identity instead of
 brittle `response.Content.Should().Contain("not found")` substring checks.

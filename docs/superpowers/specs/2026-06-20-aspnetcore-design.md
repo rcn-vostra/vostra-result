@@ -1,6 +1,6 @@
-# Vostra.Results.AspNetCore — Design Spec
+# Vostra.Result.AspNetCore — Design Spec
 
-**Status:** Approved for planning · **Date:** 2026-06-20 · **Package:** `Vostra.Results.AspNetCore`
+**Status:** Approved for planning · **Date:** 2026-06-20 · **Package:** `Vostra.Result.AspNetCore`
 
 Maps `Result`/`Result<T>` onto HTTP via extension methods returning `IResult`. Builds on the completed
 `Core` package. Implements FR-10 of
@@ -9,7 +9,7 @@ parked brainstorm [2026-06-20-aspnetcore-design-PARKED.md](../notes/2026-06-20-a
 
 ## 1. Goal & scope
 
-Provide the HTTP boundary for `Vostra.Results`: turn a service's `Result<T>` into an HTTP response with a
+Provide the HTTP boundary for `Vostra.Result`: turn a service's `Result<T>` into an HTTP response with a
 typed-error wire contract, **without** a controller base class and **without** putting any HTTP knowledge in
 `Core`. The error *identity* (`code` + `ErrorType`) must survive onto the wire so the later `Testing` package
 can reconstruct typed errors (FR-11.3).
@@ -23,9 +23,9 @@ translation; any change to `Core`. These may follow in later specs.
 
 ## 2. Package & dependencies (NFR-1)
 
-- New project `src/Vostra.Results.AspNetCore`, multi-targeting `net8.0;net9.0`.
+- New project `src/Vostra.Result.AspNetCore`, multi-targeting `net8.0;net9.0`.
 - `FrameworkReference Include="Microsoft.AspNetCore.App"` (ASP.NET Core abstractions only).
-- `ProjectReference` to `Vostra.Results` (Core).
+- `ProjectReference` to `Vostra.Result` (Core).
 - No other runtime NuGet dependencies. `Core` remains HTTP-free.
 
 ## 3. Public surface
@@ -261,7 +261,7 @@ usage-demonstrating tests):
 
 Usage docs ship with the package, not as an afterthought:
 
-- A package `README.md` (`src/Vostra.Results.AspNetCore/README.md`, also used as the NuGet package readme)
+- A package `README.md` (`src/Vostra.Result.AspNetCore/README.md`, also used as the NuGet package readme)
   covering: install, `AddVostraResults` setup, the three `ToHttpResponse` overloads, minimal-API **and**
   controller call-site examples, the success/list/error/validation wire shapes, and the status-mapping
   precedence with a `MapStatus`/`MapStatusForCode` example.

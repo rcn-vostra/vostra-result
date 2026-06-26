@@ -141,7 +141,7 @@ Ranked; none block publish but several are **SemVer-relevant** (cheaper to fix b
 
 ## 7. Licensing flag (CI/legal — not a package issue)
 
-- [ ] **FluentAssertions 8.10.0** in `tests/Vostra.Results.Tests` (`…Tests.csproj:14`) is **commercially
+- [ ] **FluentAssertions 8.10.0** in `tests/Vostra.Result.Tests` (`…Tests.csproj:14`) is **commercially
       licensed** (v8), per our own CLAUDE.md. Test-only, never shipped — but a public MIT repo running a
       paid-license lib in CI without a license is real exposure. **Decide:** pin to FluentAssertions ≤ 7.x
       (last Apache-2.0 line) or migrate the assertions. (Affects all three test projects if they share it.)
@@ -160,5 +160,5 @@ Ranked; none block publish but several are **SemVer-relevant** (cheaper to fix b
    the rest can trail.
 8. Publish Core first, then AspNetCore + Testing (both off Core), then AspNetCore.Testing (dependency order).
    Note: the NFR-1 "Testing depends on AspNetCore" rationale now applies to **AspNetCore.Testing** —
-   `Vostra.Results.Testing` is Core-only after the 2026-06-22 split. Add a `PackageTags`/packaging pass for
+   `Vostra.Result.Testing` is Core-only after the 2026-06-22 split. Add a `PackageTags`/packaging pass for
    the new `AspNetCore.Testing` project alongside the others (§3).

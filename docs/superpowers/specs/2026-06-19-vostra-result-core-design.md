@@ -1,4 +1,4 @@
-# Design — `Vostra.Results` Core (v1)
+# Design — `Vostra.Result` Core (v1)
 
 **Date:** 2026-06-19 · **Status:** Approved (brainstorming) · **Scope:** `Core` package only.
 
@@ -30,7 +30,7 @@ lands with `AspNetCore`). All HTTP status mapping is out of `Core` entirely.
 
 ## 3. Decisions carried in
 
-- `Result<T>` in namespace `Vostra.Results` (OD-1).
+- `Result<T>` in namespace `Vostra.Result` (OD-1).
 - Single error, list-capable (OD-2).
 - `Core` knows only a **neutral `ErrorType` taxonomy**; *all* HTTP status mapping lives in the future
   `AspNetCore` package. `Core` has zero HTTP awareness.
@@ -113,10 +113,10 @@ Result<ShippingLabel> label = await GetOrderAsync(id)
 ## 8. Project layout
 
 ```
-Vostra.Results.sln
+Vostra.Result.sln
 Directory.Build.props            # net8.0;net9.0; Nullable enable; LangVersion latest; GenerateDocumentationFile
-src/Vostra.Results/              # Core — references ONLY the BCL (NFR-1)
-tests/Vostra.Results.Tests/      # xUnit + FluentAssertions
+src/Vostra.Result/              # Core — references ONLY the BCL (NFR-1)
+tests/Vostra.Result.Tests/      # xUnit + FluentAssertions
 LICENSE                          # MIT
 THIRD-PARTY-NOTICES.md           # credit ErrorOr (Amichai Mantinband) + FluentResults (Michael Altmann) (§7)
 ```

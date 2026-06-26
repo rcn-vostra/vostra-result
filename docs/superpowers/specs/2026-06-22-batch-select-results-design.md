@@ -1,6 +1,6 @@
 # Design — `SelectResultsAsync`: a non-collapsing batch traverse
 
-**Date:** 2026-06-22 · **Status:** Approved (brainstorm) · **Scope:** Core (`Vostra.Results`) only.
+**Date:** 2026-06-22 · **Status:** Approved (brainstorm) · **Scope:** Core (`Vostra.Result`) only.
 **Origin:** Maximo adapter team feedback, ask #2 ([cc/docs-in/request-for-changes-wom-masa.md](../../../cc/docs-in/request-for-changes-wom-masa.md)).
 **Second opinions:** internal max-depth subagent + ChatGPT — both converged on this shape
 ([question](../../../cc/docs-out/2026-06-22-batch-outcome-combinator-question.md),

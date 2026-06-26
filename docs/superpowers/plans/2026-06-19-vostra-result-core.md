@@ -1,8 +1,8 @@
-# Vostra.Results Core v1 Implementation Plan
+# Vostra.Result Core v1 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the dependency-free `Vostra.Results` Core package — a `readonly struct Result<T>` with a typed `Error` hierarchy, implicit conversions, `Match`/`Switch`, a uniform sync+async combinator matrix, LINQ query syntax, and aggregation.
+**Goal:** Build the dependency-free `Vostra.Result` Core package — a `readonly struct Result<T>` with a typed `Error` hierarchy, implicit conversions, `Match`/`Switch`, a uniform sync+async combinator matrix, LINQ query syntax, and aggregation.
 
 **Architecture:** A `readonly struct Result<T>` (and non-generic `Result`) holds either a value or one-or-more `Error`s, discriminated by an `_initialized` flag so `default(Result<T>)` is a *faulted* result, not a silent success. Value access is only via `Match`/`Switch`/`TryGet` — there is no public `Value`. Sync combinators are instance methods on the struct; the async matrix is extension methods on `Task<Result<T>>` that await and delegate, so any async step "lifts" a chain to `Task<Result<>>` and it stays there. The neutral `ErrorType` enum carries failure taxonomy only — no HTTP.
 
@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Namespace: `Vostra.Results` (library), `Vostra.Results.Tests` (tests).
+- Namespace: `Vostra.Result` (library), `Vostra.Result.Tests` (tests).
 - Target frameworks: `net8.0;net9.0`.
 - Library project references **only the BCL** — zero NuGet runtime dependencies (NFR-1).
 - `Nullable` enabled; `LangVersion` latest; `GenerateDocumentationFile` true; `TreatWarningsAsErrors` true.
@@ -27,17 +27,17 @@
 
 **Files:**
 - Create: `Directory.Build.props`
-- Create: `Vostra.Results.sln`
-- Create: `src/Vostra.Results/Vostra.Results.csproj`
-- Create: `tests/Vostra.Results.Tests/Vostra.Results.Tests.csproj`
+- Create: `Vostra.Result.sln`
+- Create: `src/Vostra.Result/Vostra.Result.csproj`
+- Create: `tests/Vostra.Result.Tests/Vostra.Result.Tests.csproj`
 - Create: `LICENSE`
 - Create: `THIRD-PARTY-NOTICES.md`
 - Create: `.gitignore`
-- Test: `tests/Vostra.Results.Tests/SmokeTests.cs`
+- Test: `tests/Vostra.Result.Tests/SmokeTests.cs`
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: a buildable solution with a passing test project; the `Vostra.Results` namespace root.
+- Produces: a buildable solution with a passing test project; the `Vostra.Result` namespace root.
 
 - [ ] **Step 1: Create `.gitignore`**
 
@@ -71,17 +71,17 @@ artifacts/
 
 Run:
 ```bash
-dotnet new sln -n Vostra.Results
-dotnet new classlib -o src/Vostra.Results -f net8.0
-dotnet new xunit -o tests/Vostra.Results.Tests -f net8.0
-rm src/Vostra.Results/Class1.cs tests/Vostra.Results.Tests/UnitTest1.cs
-dotnet sln add src/Vostra.Results/Vostra.Results.csproj
-dotnet sln add tests/Vostra.Results.Tests/Vostra.Results.Tests.csproj
-dotnet add tests/Vostra.Results.Tests reference src/Vostra.Results/Vostra.Results.csproj
-dotnet add tests/Vostra.Results.Tests package FluentAssertions
+dotnet new sln -n Vostra.Result
+dotnet new classlib -o src/Vostra.Result -f net8.0
+dotnet new xunit -o tests/Vostra.Result.Tests -f net8.0
+rm src/Vostra.Result/Class1.cs tests/Vostra.Result.Tests/UnitTest1.cs
+dotnet sln add src/Vostra.Result/Vostra.Result.csproj
+dotnet sln add tests/Vostra.Result.Tests/Vostra.Result.Tests.csproj
+dotnet add tests/Vostra.Result.Tests reference src/Vostra.Result/Vostra.Result.csproj
+dotnet add tests/Vostra.Result.Tests package FluentAssertions
 ```
 
-- [ ] **Step 4: Set multi-targeting and metadata in `src/Vostra.Results/Vostra.Results.csproj`**
+- [ ] **Step 4: Set multi-targeting and metadata in `src/Vostra.Result/Vostra.Result.csproj`**
 
 Replace the file contents with:
 ```xml
@@ -89,13 +89,13 @@ Replace the file contents with:
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageId>Vostra.Results</PackageId>
+    <PackageId>Vostra.Result</PackageId>
     <Description>A lean, async-friendly, dependency-free Result&lt;T&gt; type for .NET.</Description>
   </PropertyGroup>
 </Project>
 ```
 
-- [ ] **Step 5: Multi-target the test project `tests/Vostra.Results.Tests/Vostra.Results.Tests.csproj`**
+- [ ] **Step 5: Multi-target the test project `tests/Vostra.Result.Tests/Vostra.Result.Tests.csproj`**
 
 Ensure the `<TargetFramework>net8.0</TargetFramework>` line reads:
 ```xml
@@ -134,7 +134,7 @@ SOFTWARE.
 ```markdown
 # Third-Party Notices
 
-Vostra.Results borrows design ideas (and, where noted in source, small amounts of code)
+Vostra.Result borrows design ideas (and, where noted in source, small amounts of code)
 from the following MIT-licensed projects. Their copyright notices are reproduced here.
 
 ## ErrorOr — Copyright (c) Amichai Mantinband (MIT)
@@ -147,10 +147,10 @@ Typed errors, `CausedBy(exception)`, metadata, `Merge`/aggregation.
 Discriminated-union / exhaustive match ergonomics (reference for later work).
 ```
 
-- [ ] **Step 8: Write the smoke test `tests/Vostra.Results.Tests/SmokeTests.cs`**
+- [ ] **Step 8: Write the smoke test `tests/Vostra.Result.Tests/SmokeTests.cs`**
 
 ```csharp
-namespace Vostra.Results.Tests;
+namespace Vostra.Result.Tests;
 
 public class SmokeTests
 {
@@ -162,7 +162,7 @@ public class SmokeTests
 }
 ```
 
-- [ ] **Step 9: Add a global using for FluentAssertions `tests/Vostra.Results.Tests/GlobalUsings.cs`**
+- [ ] **Step 9: Add a global using for FluentAssertions `tests/Vostra.Result.Tests/GlobalUsings.cs`**
 
 ```csharp
 global using FluentAssertions;
@@ -178,7 +178,7 @@ Expected: build succeeds for both TFMs; 1 test passes (×2 frameworks).
 
 ```bash
 git add -A
-git commit -m "chore: scaffold Vostra.Results solution, Core + test projects"
+git commit -m "chore: scaffold Vostra.Result solution, Core + test projects"
 ```
 
 ---
@@ -186,10 +186,10 @@ git commit -m "chore: scaffold Vostra.Results solution, Core + test projects"
 ### Task 2: Error model — `ErrorType`, abstract `Error`, built-in kinds
 
 **Files:**
-- Create: `src/Vostra.Results/ErrorType.cs`
-- Create: `src/Vostra.Results/Error.cs`
-- Create: `src/Vostra.Results/Errors.cs`
-- Test: `tests/Vostra.Results.Tests/ErrorTests.cs`
+- Create: `src/Vostra.Result/ErrorType.cs`
+- Create: `src/Vostra.Result/Error.cs`
+- Create: `src/Vostra.Result/Errors.cs`
+- Test: `tests/Vostra.Result.Tests/ErrorTests.cs`
 
 **Interfaces:**
 - Consumes: nothing.
@@ -198,10 +198,10 @@ git commit -m "chore: scaffold Vostra.Results solution, Core + test projects"
   - `abstract class Error` with `string Code`, `string Message`, `ErrorType Type`, `Exception? CausedBy`, `IReadOnlyDictionary<string,object?>? Metadata`; value equality on `(GetType, Type, Code, Message)`.
   - Sealed subclasses: `ValidationError`, `NotFoundError`, `ConflictError`, `AlreadyExistsError`, `UnauthorizedError`, `ForbiddenError`, `UnexpectedError`. Each ctor: `(string message, string code = <default>, Exception? causedBy = null, IReadOnlyDictionary<string,object?>? metadata = null)`.
 
-- [ ] **Step 1: Write the failing tests `tests/Vostra.Results.Tests/ErrorTests.cs`**
+- [ ] **Step 1: Write the failing tests `tests/Vostra.Result.Tests/ErrorTests.cs`**
 
 ```csharp
-namespace Vostra.Results.Tests;
+namespace Vostra.Result.Tests;
 
 public class ErrorTests
 {
@@ -255,14 +255,14 @@ public class ErrorTests
 Run: `dotnet test --filter "FullyQualifiedName~ErrorTests"`
 Expected: FAIL — `ErrorType`, `NotFoundError`, etc. do not exist (compile error).
 
-- [ ] **Step 3: Create `src/Vostra.Results/ErrorType.cs`**
+- [ ] **Step 3: Create `src/Vostra.Result/ErrorType.cs`**
 
 ```csharp
-namespace Vostra.Results;
+namespace Vostra.Result;
 
 /// <summary>
 /// Transport-neutral taxonomy of failure kinds. Carries no HTTP semantics —
-/// status mapping lives in the Vostra.Results.AspNetCore package.
+/// status mapping lives in the Vostra.Result.AspNetCore package.
 /// </summary>
 public enum ErrorType
 {
@@ -289,10 +289,10 @@ public enum ErrorType
 }
 ```
 
-- [ ] **Step 4: Create `src/Vostra.Results/Error.cs`**
+- [ ] **Step 4: Create `src/Vostra.Result/Error.cs`**
 
 ```csharp
-namespace Vostra.Results;
+namespace Vostra.Result;
 
 /// <summary>
 /// Base type for all errors. An error carries a stable <see cref="Code"/> identity,
@@ -350,10 +350,10 @@ public abstract class Error : IEquatable<Error>
 }
 ```
 
-- [ ] **Step 5: Create `src/Vostra.Results/Errors.cs`**
+- [ ] **Step 5: Create `src/Vostra.Result/Errors.cs`**
 
 ```csharp
-namespace Vostra.Results;
+namespace Vostra.Result;
 
 /// <summary>Input failed validation (maps to 400 in the HTTP layer).</summary>
 public sealed class ValidationError : Error
@@ -457,9 +457,9 @@ git commit -m "feat: add ErrorType taxonomy and typed Error hierarchy"
 ### Task 3: `Result<T>` core — state, conversions, default-is-faulted, equality
 
 **Files:**
-- Create: `src/Vostra.Results/ResultSentinels.cs`
-- Create: `src/Vostra.Results/ResultOfT.cs`
-- Test: `tests/Vostra.Results.Tests/ResultOfTTests.cs`
+- Create: `src/Vostra.Result/ResultSentinels.cs`
+- Create: `src/Vostra.Result/ResultOfT.cs`
+- Test: `tests/Vostra.Result.Tests/ResultOfTTests.cs`
 
 **Interfaces:**
 - Consumes: `Error`, `ErrorType`, `UnexpectedError`.
@@ -471,10 +471,10 @@ git commit -m "feat: add ErrorType taxonomy and typed Error hierarchy"
   - internal `T UnsafeValue`, internal `Error[] ErrorArray`, internal `Result<U> ToError<U>()`
   - value equality, `==`/`!=`, `ToString()`
 
-- [ ] **Step 1: Write the failing tests `tests/Vostra.Results.Tests/ResultOfTTests.cs`**
+- [ ] **Step 1: Write the failing tests `tests/Vostra.Result.Tests/ResultOfTTests.cs`**
 
 ```csharp
-namespace Vostra.Results.Tests;
+namespace Vostra.Result.Tests;
 
 public class ResultOfTTests
 {
@@ -544,10 +544,10 @@ public class ResultOfTTests
 Run: `dotnet test --filter "FullyQualifiedName~ResultOfTTests"`
 Expected: FAIL — `Result<T>` does not exist (compile error).
 
-- [ ] **Step 3: Create `src/Vostra.Results/ResultSentinels.cs`**
+- [ ] **Step 3: Create `src/Vostra.Result/ResultSentinels.cs`**
 
 ```csharp
-namespace Vostra.Results;
+namespace Vostra.Result;
 
 /// <summary>Shared singletons so the uninitialized-result error allocates once, not per generic instantiation.</summary>
 internal static class ResultSentinels
@@ -563,12 +563,12 @@ internal static class ResultSentinels
 }
 ```
 
-- [ ] **Step 4: Create `src/Vostra.Results/ResultOfT.cs`**
+- [ ] **Step 4: Create `src/Vostra.Result/ResultOfT.cs`**
 
 ```csharp
 using System.Diagnostics.CodeAnalysis;
 
-namespace Vostra.Results;
+namespace Vostra.Result;
 
 /// <summary>
 /// Carries either a value of type <typeparamref name="T"/> or one-or-more <see cref="Error"/>s.
@@ -678,8 +678,8 @@ git commit -m "feat: add Result<T> struct with implicit conversions and faulted 
 ### Task 4: Non-generic `Result` + factory entry points
 
 **Files:**
-- Create: `src/Vostra.Results/Result.cs`
-- Test: `tests/Vostra.Results.Tests/ResultTests.cs`
+- Create: `src/Vostra.Result/Result.cs`
+- Test: `tests/Vostra.Result.Tests/ResultTests.cs`
 
 **Interfaces:**
 - Consumes: `Error`, `Result<T>`, `ResultSentinels`.
@@ -692,10 +692,10 @@ git commit -m "feat: add Result<T> struct with implicit conversions and faulted 
   - implicit operators from `Error`, `Error[]`
   - equality, `ToString()`
 
-- [ ] **Step 1: Write the failing tests `tests/Vostra.Results.Tests/ResultTests.cs`**
+- [ ] **Step 1: Write the failing tests `tests/Vostra.Result.Tests/ResultTests.cs`**
 
 ```csharp
-namespace Vostra.Results.Tests;
+namespace Vostra.Result.Tests;
 
 public class ResultTests
 {
@@ -747,10 +747,10 @@ public class ResultTests
 Run: `dotnet test --filter "FullyQualifiedName~ResultTests"`
 Expected: FAIL — `Result` (non-generic) does not exist.
 
-- [ ] **Step 3: Create `src/Vostra.Results/Result.cs`**
+- [ ] **Step 3: Create `src/Vostra.Result/Result.cs`**
 
 ```csharp
-namespace Vostra.Results;
+namespace Vostra.Result;
 
 /// <summary>
 /// A success/failure result without a value, for void-returning operations.
@@ -848,8 +848,8 @@ git commit -m "feat: add non-generic Result and factory entry points"
 ### Task 5: Inspection & extraction — `Match`, `Switch`, `TryGet`, `GetValueOr`
 
 **Files:**
-- Create: `src/Vostra.Results/ResultOfT.Inspection.cs`
-- Test: `tests/Vostra.Results.Tests/InspectionTests.cs`
+- Create: `src/Vostra.Result/ResultOfT.Inspection.cs`
+- Test: `tests/Vostra.Result.Tests/InspectionTests.cs`
 
 **Interfaces:**
 - Consumes: `Result<T>` (internal `UnsafeValue`), `Error`.
@@ -862,10 +862,10 @@ git commit -m "feat: add non-generic Result and factory entry points"
   - `bool TryGetErrors(out IReadOnlyList<Error>? errors)`
   - `T GetValueOr(T fallback)` and `T GetValueOr(Func<IReadOnlyList<Error>,T> fallback)`
 
-- [ ] **Step 1: Write the failing tests `tests/Vostra.Results.Tests/InspectionTests.cs`**
+- [ ] **Step 1: Write the failing tests `tests/Vostra.Result.Tests/InspectionTests.cs`**
 
 ```csharp
-namespace Vostra.Results.Tests;
+namespace Vostra.Result.Tests;
 
 public class InspectionTests
 {
@@ -942,12 +942,12 @@ public class InspectionTests
 Run: `dotnet test --filter "FullyQualifiedName~InspectionTests"`
 Expected: FAIL — `Match`/`Switch`/`TryGetValue`/etc. do not exist.
 
-- [ ] **Step 3: Create `src/Vostra.Results/ResultOfT.Inspection.cs`**
+- [ ] **Step 3: Create `src/Vostra.Result/ResultOfT.Inspection.cs`**
 
 ```csharp
 using System.Diagnostics.CodeAnalysis;
 
-namespace Vostra.Results;
+namespace Vostra.Result;
 
 public readonly partial struct Result<T>
 {
@@ -1021,7 +1021,7 @@ public readonly partial struct Result<T>
 
 - [ ] **Step 4: Make `Result<T>` partial**
 
-In `src/Vostra.Results/ResultOfT.cs`, change the declaration line:
+In `src/Vostra.Result/ResultOfT.cs`, change the declaration line:
 ```csharp
 public readonly struct Result<T> : IEquatable<Result<T>>
 ```
@@ -1047,8 +1047,8 @@ git commit -m "feat: add Match/Switch and safe extraction to Result<T>"
 ### Task 6: Synchronous combinators — `Map`, `Then`, `Tap`, `TapError`, `Ensure`, `MapError`
 
 **Files:**
-- Create: `src/Vostra.Results/ResultOfT.Combinators.cs`
-- Test: `tests/Vostra.Results.Tests/SyncCombinatorTests.cs`
+- Create: `src/Vostra.Result/ResultOfT.Combinators.cs`
+- Test: `tests/Vostra.Result.Tests/SyncCombinatorTests.cs`
 
 **Interfaces:**
 - Consumes: `Result<T>` (internal `UnsafeValue`, `ToError<U>`, `ErrorArray`), `Error`, `ValidationError`.
@@ -1061,10 +1061,10 @@ git commit -m "feat: add Match/Switch and safe extraction to Result<T>"
   - `Result<T> Ensure(Func<T,bool> predicate, string validationMessage)` (defaults to `ValidationError`)
   - `Result<T> MapError(Func<Error,Error> map)`
 
-- [ ] **Step 1: Write the failing tests `tests/Vostra.Results.Tests/SyncCombinatorTests.cs`**
+- [ ] **Step 1: Write the failing tests `tests/Vostra.Result.Tests/SyncCombinatorTests.cs`**
 
 ```csharp
-namespace Vostra.Results.Tests;
+namespace Vostra.Result.Tests;
 
 public class SyncCombinatorTests
 {
@@ -1147,10 +1147,10 @@ public class SyncCombinatorTests
 Run: `dotnet test --filter "FullyQualifiedName~SyncCombinatorTests"`
 Expected: FAIL — `Map`/`Then`/etc. do not exist.
 
-- [ ] **Step 3: Create `src/Vostra.Results/ResultOfT.Combinators.cs`**
+- [ ] **Step 3: Create `src/Vostra.Result/ResultOfT.Combinators.cs`**
 
 ```csharp
-namespace Vostra.Results;
+namespace Vostra.Result;
 
 public readonly partial struct Result<T>
 {
@@ -1215,9 +1215,9 @@ git commit -m "feat: add synchronous combinators to Result<T>"
 ### Task 7: Async matrix — `Task<Result<T>>` receiver and `Task` projections
 
 **Files:**
-- Create: `src/Vostra.Results/ResultOfT.AsyncProjections.cs` (sync receiver, async projection — instance methods)
-- Create: `src/Vostra.Results/ResultAsyncExtensions.cs` (`Task<Result<T>>` receiver — extension methods)
-- Test: `tests/Vostra.Results.Tests/AsyncMatrixTests.cs`
+- Create: `src/Vostra.Result/ResultOfT.AsyncProjections.cs` (sync receiver, async projection — instance methods)
+- Create: `src/Vostra.Result/ResultAsyncExtensions.cs` (`Task<Result<T>>` receiver — extension methods)
+- Test: `tests/Vostra.Result.Tests/AsyncMatrixTests.cs`
 
 **Interfaces:**
 - Consumes: `Result<T>` and all sync combinators from Task 6.
@@ -1226,10 +1226,10 @@ git commit -m "feat: add synchronous combinators to Result<T>"
     `Map<U>(Func<T,Task<U>>)`, `Then<U>(Func<T,Task<Result<U>>>)`, `Tap(Func<T,Task>)`, `TapError(Func<IReadOnlyList<Error>,Task>)`, `Ensure(Func<T,Task<bool>>, Error)`, `Ensure(Func<T,Task<bool>>, string)`.
   - Extensions on `Task<Result<T>>` (async receiver), one per combinator × {sync projection, async projection}, all returning `Task<Result<…>>`: `Map`, `Then`, `Tap`, `TapError`, `Ensure` (Error + string), `MapError`.
 
-- [ ] **Step 1: Write the failing tests `tests/Vostra.Results.Tests/AsyncMatrixTests.cs`**
+- [ ] **Step 1: Write the failing tests `tests/Vostra.Result.Tests/AsyncMatrixTests.cs`**
 
 ```csharp
-namespace Vostra.Results.Tests;
+namespace Vostra.Result.Tests;
 
 public class AsyncMatrixTests
 {
@@ -1286,10 +1286,10 @@ public class AsyncMatrixTests
 Run: `dotnet test --filter "FullyQualifiedName~AsyncMatrixTests"`
 Expected: FAIL — async overloads do not exist.
 
-- [ ] **Step 3: Create `src/Vostra.Results/ResultOfT.AsyncProjections.cs`** (sync receiver, async projection)
+- [ ] **Step 3: Create `src/Vostra.Result/ResultOfT.AsyncProjections.cs`** (sync receiver, async projection)
 
 ```csharp
-namespace Vostra.Results;
+namespace Vostra.Result;
 
 public readonly partial struct Result<T>
 {
@@ -1340,10 +1340,10 @@ public readonly partial struct Result<T>
 }
 ```
 
-- [ ] **Step 4: Create `src/Vostra.Results/ResultAsyncExtensions.cs`** (`Task<Result<T>>` receiver)
+- [ ] **Step 4: Create `src/Vostra.Result/ResultAsyncExtensions.cs`** (`Task<Result<T>>` receiver)
 
 ```csharp
-namespace Vostra.Results;
+namespace Vostra.Result;
 
 /// <summary>
 /// Async-receiver overloads. Each awaits the source result then delegates to the matching
@@ -1429,9 +1429,9 @@ git commit -m "feat: add Task-based async combinator matrix"
 ### Task 8: LINQ query syntax — `Select`, `SelectMany`, `Where`
 
 **Files:**
-- Create: `src/Vostra.Results/ResultOfT.Linq.cs` (sync, instance methods)
-- Create: `src/Vostra.Results/ResultLinqAsyncExtensions.cs` (async-receiver `SelectMany`)
-- Test: `tests/Vostra.Results.Tests/LinqTests.cs`
+- Create: `src/Vostra.Result/ResultOfT.Linq.cs` (sync, instance methods)
+- Create: `src/Vostra.Result/ResultLinqAsyncExtensions.cs` (async-receiver `SelectMany`)
+- Test: `tests/Vostra.Result.Tests/LinqTests.cs`
 
 **Interfaces:**
 - Consumes: `Result<T>` (`Map`, `Ensure`, `ToError`, `UnsafeValue`, `IsError`).
@@ -1443,10 +1443,10 @@ git commit -m "feat: add Task-based async combinator matrix"
   - Extension on `Task<Result<T>>`:
     `Task<Result<TResult>> SelectMany<T,TMid,TResult>(this Task<Result<T>> source, Func<T,Task<Result<TMid>>> bind, Func<T,TMid,TResult> project)`.
 
-- [ ] **Step 1: Write the failing tests `tests/Vostra.Results.Tests/LinqTests.cs`**
+- [ ] **Step 1: Write the failing tests `tests/Vostra.Result.Tests/LinqTests.cs`**
 
 ```csharp
-namespace Vostra.Results.Tests;
+namespace Vostra.Result.Tests;
 
 public class LinqTests
 {
@@ -1512,10 +1512,10 @@ public class LinqTests
 Run: `dotnet test --filter "FullyQualifiedName~LinqTests"`
 Expected: FAIL — query pattern members do not exist.
 
-- [ ] **Step 3: Create `src/Vostra.Results/ResultOfT.Linq.cs`**
+- [ ] **Step 3: Create `src/Vostra.Result/ResultOfT.Linq.cs`**
 
 ```csharp
-namespace Vostra.Results;
+namespace Vostra.Result;
 
 public readonly partial struct Result<T>
 {
@@ -1542,10 +1542,10 @@ public readonly partial struct Result<T>
 }
 ```
 
-- [ ] **Step 4: Create `src/Vostra.Results/ResultLinqAsyncExtensions.cs`**
+- [ ] **Step 4: Create `src/Vostra.Result/ResultLinqAsyncExtensions.cs`**
 
 ```csharp
-namespace Vostra.Results;
+namespace Vostra.Result;
 
 /// <summary>LINQ query-syntax support over <see cref="Task{TResult}"/> of <see cref="Result{T}"/>.</summary>
 public static class ResultLinqAsyncExtensions
@@ -1586,8 +1586,8 @@ git commit -m "feat: add LINQ query syntax (Select/SelectMany/Where) sync and as
 ### Task 9: Aggregation — `Combine` and throttled `SelectAsync`
 
 **Files:**
-- Create: `src/Vostra.Results/ResultAggregate.cs`
-- Test: `tests/Vostra.Results.Tests/AggregationTests.cs`
+- Create: `src/Vostra.Result/ResultAggregate.cs`
+- Test: `tests/Vostra.Result.Tests/AggregationTests.cs`
 
 **Interfaces:**
 - Consumes: `Result`, `Result<T>` (internal `UnsafeValue`, `ErrorArray`), `Error`.
@@ -1596,10 +1596,10 @@ git commit -m "feat: add LINQ query syntax (Select/SelectMany/Where) sync and as
   - `static Result<IReadOnlyList<T>> Combine<T>(params Result<T>[] results)`
   - `static Task<Result<IReadOnlyList<TOut>>> SelectAsync<TIn,TOut>(this IEnumerable<TIn> source, Func<TIn,Task<Result<TOut>>> selector, int maxConcurrency)` on a `ResultCollectionExtensions` class.
 
-- [ ] **Step 1: Write the failing tests `tests/Vostra.Results.Tests/AggregationTests.cs`**
+- [ ] **Step 1: Write the failing tests `tests/Vostra.Result.Tests/AggregationTests.cs`**
 
 ```csharp
-namespace Vostra.Results.Tests;
+namespace Vostra.Result.Tests;
 
 public class AggregationTests
 {
@@ -1686,7 +1686,7 @@ Expected: FAIL — `Combine` / `SelectAsync` do not exist.
 
 - [ ] **Step 3: Make `Result` partial**
 
-In `src/Vostra.Results/Result.cs`, change:
+In `src/Vostra.Result/Result.cs`, change:
 ```csharp
 public readonly struct Result : IEquatable<Result>
 ```
@@ -1695,10 +1695,10 @@ to:
 public readonly partial struct Result : IEquatable<Result>
 ```
 
-- [ ] **Step 4: Create `src/Vostra.Results/ResultAggregate.cs`**
+- [ ] **Step 4: Create `src/Vostra.Result/ResultAggregate.cs`**
 
 ```csharp
-namespace Vostra.Results;
+namespace Vostra.Result;
 
 public readonly partial struct Result
 {

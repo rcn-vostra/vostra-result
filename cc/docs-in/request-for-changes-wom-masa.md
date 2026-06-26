@@ -1,8 +1,8 @@
 > **MAINTAINER STATUS (2026-06-22) — annotations for the next agent; skip the ✅ items.**
 >
-> - **#1 transport-neutral test composition — ✅ DONE & merged to `main`.** `Vostra.Results.Testing` is now
+> - **#1 transport-neutral test composition — ✅ DONE & merged to `main`.** `Vostra.Result.Testing` is now
 >   Core-only (chain + assert over any `Task<Result<T>>`); the HTTP verbs split into a new
->   `Vostra.Results.AspNetCore.Testing` package. Diagnostics extension point: `error.WithRequestContext(...)`.
+>   `Vostra.Result.AspNetCore.Testing` package. Diagnostics extension point: `error.WithRequestContext(...)`.
 >   Spec: `docs/superpowers/specs/2026-06-22-transport-neutral-testing-design.md`.
 > - **#2 keep-going through every outcome — ✅ DONE & merged.** `SelectResultsAsync` — a non-collapsing
 >   batch traverse preserving every per-item `Result<T>` (successes *and* failures), throttled, in order.
@@ -13,7 +13,7 @@
 >   verbatim-preservation guarantee + tests (see hardening plan §5.1 round-trip fidelity).
 > - **#5 exception-free early-exit ergonomics — ⬜ OPEN.** Still deferred (OD-3 / FR-8).
 
-To the author of Vostra.Results,
+To the author of Vostra.Result,
 
   We're building a .NET service that sits between IBM Maximo and external contractors — it isn't a web API. Work arrives as messages on a queue (Azure Service Bus) and is processed by long-running per-work-order handlers, and our replies
   go back out as ACK/NACK messages (an "accept" or "reject, here's why" on the wire), not HTTP responses. We spent a good while weighing your library against this codebase, and we came away genuinely liking the core idea. A few things

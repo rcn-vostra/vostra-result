@@ -1,4 +1,0 @@
-global using FluentAssertions;
-global using Xunit;
-global using Vostra.Results;
-global using Vostra.Results.Testing;

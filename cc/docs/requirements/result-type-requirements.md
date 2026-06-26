@@ -25,7 +25,7 @@ a hand-rolled extension layer in `AM.Extensions`. The design is sound (errors-as
 a single HTTP-mapping point), but daily use surfaced concrete ergonomic friction. We already pay a
 maintenance cost on the wrapper *and* carry a third-party dependency whose "reasons list + metadata"
 model is heavier than we use. We want to consolidate that into one purpose-built type we fully own and
-can name as we like (`Result<T>`, namespace e.g. `Vostra.Results`).
+can name as we like (`Result<T>`, namespace e.g. `Vostra.Result`).
 
 ---
 
@@ -205,7 +205,7 @@ can name as we like (`Result<T>`, namespace e.g. `Vostra.Results`).
   abstractions.
   <!-- The original "Testing: only the chosen serializer + an assertions lib" clause was REMOVED on
        2026-06-21. The Testing package is an ASP.NET-Core-specific test client that parses the exact response
-       contract emitted by Vostra.Results.AspNetCore, so it depends on that package directly (reusing the real
+       contract emitted by Vostra.Result.AspNetCore, so it depends on that package directly (reusing the real
        envelopes/Pagination — zero duplication/drift). The shared framework it inherits ships with the .NET SDK
        and every real consumer already has it via WebApplicationFactory. See the Testing design spec §2
        (docs/superpowers/specs/2026-06-21-testing-design.md) for the full rationale and the B-fallback. -->
@@ -277,7 +277,7 @@ both projects in the README and THIRD-PARTY-NOTICES.
 
 | ID | Decision | Resolution |
 |----|----------|------------|
-| OD-1 | **Name** of the type/package | ✅ **DECIDED — `Result<T>`** in a uniquely-named, org-owned namespace (e.g. `Vostra.Results`). Familiar, zero learning curve, no clash with FluentResults. *Not* "ErrorOr". |
+| OD-1 | **Name** of the type/package | ✅ **DECIDED — `Result<T>`** in a uniquely-named, org-owned namespace (e.g. `Vostra.Result`). Familiar, zero learning curve, no clash with FluentResults. *Not* "ErrorOr". |
 | OD-2 | **Single error vs error list** | ✅ **DECIDED — single, list-capable.** The struct holds **one** error by default; aggregation (FR-9) produces many only when needed (validation accumulation, `Combine`). Leanest; avoids FluentResults' order-dependent mapping. |
 | OD-3 | Accept exception-based early-exit (FR-8)? | Recommend **yes, opt-in and documented**; it's the only way to get `?`-feel in C#. *(still open)* |
 | OD-4 | Envelope: RFC 7807 `ProblemDetails` vs custom | ✅ **DECIDED — RFC 7807 `ProblemDetails`** for errors (carries `code` + message → enables FR-11.3 typed assertions). Keep a thin success envelope for `operationId` + `data`. |

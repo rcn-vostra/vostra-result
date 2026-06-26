@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-Vostra.Results borrows design ideas (and, where noted in source, small amounts of code)
+Vostra.Result borrows design ideas (and, where noted in source, small amounts of code)
 from the following MIT-licensed projects. Their full copyright notices and license texts are
 reproduced here as required by the MIT license.
 

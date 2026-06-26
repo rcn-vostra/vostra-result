@@ -1,4 +1,4 @@
-# PARKED — Vostra.Results.AspNetCore design (brainstorm, not yet a spec)
+# PARKED — Vostra.Result.AspNetCore design (brainstorm, not yet a spec)
 
 **Status:** paused on 2026-06-20 to finish Core first. Resume with the `brainstorming` skill, then
 `writing-plans`. Branch `feat/vostra-results-aspnetcore` exists (off main) but holds no AspNetCore code yet.
