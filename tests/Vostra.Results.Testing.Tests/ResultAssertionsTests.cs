@@ -125,7 +125,7 @@ public class ResultAssertionsTests
     [Fact]
     public void Assert_noarg_nongeneric_returns_result_on_success()
     {
-        var result = Result.Success;
+        var result = Result.Success();
 
         var chained = result.Assert();
 

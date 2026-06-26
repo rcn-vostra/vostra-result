@@ -17,8 +17,9 @@ public readonly partial struct Result : IEquatable<Result>
         _successKind = successKind;
     }
 
-    /// <summary>A successful (valueless) result.</summary>
-    public static Result Success { get; } = new(initialized: true, errors: null, SuccessKind.Ok);
+    /// <summary>A successful (valueless) result. A method (not a property) for symmetry with the other
+    /// factories — <see cref="Created()"/>, <see cref="Ok{T}"/>, <see cref="Fail{T}"/>, <see cref="Failure(ErrorBase)"/>.</summary>
+    public static Result Success() => new(initialized: true, errors: null, SuccessKind.Ok);
 
     /// <summary>A successful (valueless) result that created a new resource.</summary>
     public static Result Created() => new(initialized: true, errors: null, SuccessKind.Created);

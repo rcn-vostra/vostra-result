@@ -69,4 +69,12 @@ public readonly partial struct Result<T>
 
     /// <summary>Returns the value, or the result of <paramref name="fallback"/> when this is a failure.</summary>
     public T GetValueOr(Func<IReadOnlyList<ErrorBase>, T> fallback) => IsSuccess ? UnsafeValue : fallback(Errors);
+
+    /// <summary>
+    /// Returns the value, or throws <see cref="InvalidOperationException"/> when this is a failure. Use only
+    /// when success is already established (e.g. after <see cref="TryGetValue"/>, or in a test). For a real
+    /// fallback use <see cref="GetValueOr(T)"/>; to handle both branches use <see cref="Match{TOut}"/>.
+    /// </summary>
+    public T GetValueOrThrow() =>
+        IsSuccess ? UnsafeValue : throw new InvalidOperationException($"Result is a failure ({FirstError}); there is no value.");
 }

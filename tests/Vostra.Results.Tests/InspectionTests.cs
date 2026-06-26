@@ -67,4 +67,13 @@ public class InspectionTests
         Find(2).GetValueOr(-1).Should().Be(-1);
         Find(1).GetValueOr(-1).Should().Be(100);
     }
+
+    [Fact]
+    public void GetValueOrThrow_returns_value_on_success_and_throws_on_failure()
+    {
+        Find(1).GetValueOrThrow().Should().Be(100);
+
+        var act = () => Find(2).GetValueOrThrow();
+        act.Should().Throw<InvalidOperationException>();
+    }
 }

@@ -76,12 +76,16 @@ string label = result.Match(
 
 if (result.TryGetValue(out var order)) { /* use order */ }
 
-Order order = result.GetValueOr(Order.Empty);
+Order order = result.GetValueOr(fallbackOrder);   // a *genuine* fallback to use when it failed
+Order known = result.GetValueOrThrow();            // success already established — unwrap, else throw
 
 result.Switch(
     onOk:  o      => Console.WriteLine(o.Id),
     onErr: errs   => Log(errs));
 ```
+
+`GetValueOr` is for a real fallback value, not "I know it succeeded" — for that, use `GetValueOrThrow()`
+(loud on a broken assumption, never a silent default) or, to handle both branches, `Match`.
 
 ### Transform & chain (sync)
 

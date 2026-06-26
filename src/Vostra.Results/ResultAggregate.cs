@@ -6,7 +6,7 @@ public readonly partial struct Result
     public static Result Combine(params Result[] results)
     {
         var errors = results.Where(r => r.IsError).SelectMany(r => r.Errors).ToArray();
-        return errors.Length == 0 ? Success : FromErrors(errors);
+        return errors.Length == 0 ? Success() : FromErrors(errors);
     }
 
     /// <summary>Combines value-results into a single result carrying all values, or all errors.</summary>

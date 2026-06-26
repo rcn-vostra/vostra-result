@@ -11,7 +11,7 @@ To return a failure today you write `new NotFoundError(...)` and rely on the imp
 site has no way to ask "what failure kinds exist?" without knowing the concrete type names up front.
 
 We want the IDE to answer that question. Type `Result.` and IntelliSense should list every built-in
-failure kind — mirroring how `Result.Success`, `Result.Created()`, `Result.Ok<T>()` and `Result.Fail<T>()`
+failure kind — mirroring how `Result.Success()`, `Result.Created()`, `Result.Ok<T>()` and `Result.Fail<T>()`
 already make the *success* side discoverable from the single `Result` entry point.
 
 ## Decision

@@ -2,15 +2,15 @@ namespace Vostra.Results.Tests;
 
 public class ResultAsyncTests
 {
-    private static Task<Result> OkAsync() => Task.FromResult(Result.Success);
+    private static Task<Result> OkAsync() => Task.FromResult(Result.Success());
     private static Task<Result> ErrAsync() => Task.FromResult(Result.Failure(new ConflictError("dup")));
 
     [Fact]
     public async Task Mixed_chain_resolves_with_one_await()
     {
         Result<int> r = await OkAsync()
-            .Then(() => Result.Success)                       // sync valueless step
-            .Then(() => Task.FromResult(Result.Success))      // async valueless step
+            .Then(() => Result.Success())                       // sync valueless step
+            .Then(() => Task.FromResult(Result.Success()))      // async valueless step
             .Then(() => Result.Ok(7));                        // chain into a value
         r.Should().Be(Result.Ok(7));
     }
