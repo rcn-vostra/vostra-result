@@ -19,7 +19,7 @@
 
     <!-- Version: the local/dev default. Releases override this from the git tag
          (see .github/workflows/release.yml Pack step), so the tag is the single source of truth. -->
-    <Version>1.1.1</Version>
+    <Version>1.1.2</Version>
 
     <!-- Source Link -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
