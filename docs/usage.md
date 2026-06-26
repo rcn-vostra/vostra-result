@@ -172,6 +172,22 @@ new ValidationError("Qty must be positive.", field: "qty")
 Without a `field:`, a validation error is keyed by its `Code` in that map (so unfielded errors land under
 `"General.Validation"`). The `field` value is stored under the public `ErrorBase.FieldMetadataKey` constant.
 
+For field-by-field validation, **`Result.Validate(condition, message, field)`** is the sugar — chain one
+per rule and it accumulates every failure (it does *not* short-circuit), building the `ValidationError`s for
+you. The passing path allocates nothing:
+
+```csharp
+Result verdict = Result.Success()
+    .Validate(dto.Email is { Length: > 0 }, "Email is required.",   field: "email")
+    .Validate(dto.Qty > 0,                  "Qty must be positive.", field: "qty", code: "Qty.NotPositive")
+    .Validate(dto.Name is { Length: > 0 },  "Name is required.",     field: "name");
+// all true -> Success; otherwise a failure carrying EVERY failed rule -> one 400 field-map
+```
+
+`Validate` takes a plain `bool`, so each condition is evaluated eagerly — perfect for *independent* rules
+like these. For a check that depends on a previous one passing (null-check then dereference), reach for
+`Ensure` (deferred predicate) or an early return instead.
+
 ### Keep every outcome (don't collapse)
 
 `Combine`/`SelectAsync` are *all-or-nothing*: one failure discards every success. When you instead need
