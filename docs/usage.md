@@ -117,6 +117,18 @@ Result<Receipt> receipt =
         .Map(r => r.Receipt);
 ```
 
+The **terminals** lift too — `Match`/`MatchFirst`/`Switch`/`SwitchFirst`/`GetValueOr` have async-receiver
+overloads, so a chain ends in one top-to-bottom expression without a wrapping `await`:
+
+```csharp
+string label = await GetOrderAsync(id)
+    .Then(Charge).Map(r => r.Receipt)
+    .Match(r => $"#{r.Id}", errs => errs[0].Message);   // no (await …).Match — it lifts
+```
+
+(Match/Switch arms stay synchronous; an arm that itself does async work returns a `Task` you await with the
+expression. The multi-success unions get the same async `Match`/`Switch`.)
+
 ### LINQ query syntax
 
 Prefer a declarative shape? The same composition is available as a query. Each `from` only runs if the
