@@ -14,7 +14,7 @@ questions. Code follows an agreed design, not the other way around.
 ## Status
 
 **All four packages are built, tested, merged to `main`, and published to NuGet** on the
-**`1.0.0-preview`** line (latest **`1.0.0-preview.3`**, 2026-06-26) via tag-triggered OIDC trusted
+**`1.0.0-preview`** line (latest **`1.0.0-preview.4`**, 2026-06-26) via tag-triggered OIDC trusted
 publishing (`.github/workflows/release.yml`). **To cut a release: push a `v*` tag** — the tag is the single
 source of truth for the package version (the Pack step passes `-p:Version=$VERSION`). Pre-1.0 hardening
 (benchmarks/NFR-2, packaging polish) is the remaining phase before a stable **1.0.0**.
@@ -32,7 +32,7 @@ source of truth for the package version (the Pack step passes `-p:Version=$VERSI
 - **Core** also has `SelectResultsAsync` — a non-collapsing batch traverse (per-item `Result<T>` preserved),
   added 2026-06-22.
 
-~214 tests/TFM, green on **net8.0 + net10.0** (the two LTS lines; net9.0 dropped 2026-06-22), 0 warnings.
+~225 tests/TFM, green on **net8.0 + net10.0** (the two LTS lines; net9.0 dropped 2026-06-22), 0 warnings.
 
 ## Start here
 
