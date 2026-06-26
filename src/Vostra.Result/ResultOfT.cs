@@ -51,8 +51,14 @@ public readonly partial struct Result<T> : IEquatable<Result<T>>
 
     internal ErrorBase[] ErrorArray => _errors ?? ResultSentinels.UninitializedArray;
 
-    /// <summary>Re-tags this failure as a <c>Result&lt;U&gt;</c>, preserving the errors.</summary>
-    internal Result<U> ToError<U>() => Result<U>.Err(ErrorArray);
+    /// <summary>
+    /// Re-types this failure as a <c>Result&lt;U&gt;</c>, carrying the same errors — propagate a failure
+    /// across a type change without unwrapping. Throws if this is a success (there is no <typeparamref
+    /// name="U"/> value to carry).
+    /// </summary>
+    public Result<U> ToError<U>() =>
+        IsError ? Result<U>.Err(ErrorArray)
+                : throw new InvalidOperationException("Result is a success; cannot convert it to a failed Result<U>.");
 
     /// <summary>Creates a success from a value.</summary>
     public static implicit operator Result<T>(T value) => Ok(value);

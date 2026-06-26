@@ -59,6 +59,15 @@ public readonly partial struct Result : IEquatable<Result>
     public ErrorBase FirstError =>
         IsError ? Errors[0] : throw new InvalidOperationException("Result is a success; there is no error.");
 
+    /// <summary>
+    /// Propagates this failure as a typed <c>Result&lt;T&gt;</c>, carrying the same errors — the clean way to
+    /// return a valueless failure from a <c>Result&lt;T&gt;</c>-returning method. Throws if this is a success
+    /// (a valueless success has no <typeparamref name="T"/> value to give).
+    /// </summary>
+    public Result<T> ToError<T>() =>
+        IsError ? Result<T>.Err(ErrorArray)
+                : throw new InvalidOperationException("Result is a success; cannot convert it to a failed Result<T>.");
+
     /// <summary>Creates a failed result from a single error.</summary>
     public static implicit operator Result(ErrorBase error) => Failure(error);
 
