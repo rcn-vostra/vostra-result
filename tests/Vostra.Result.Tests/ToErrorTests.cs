@@ -33,4 +33,23 @@ public class ToErrorTests
         fromValueless.Should().Throw<InvalidOperationException>();
         fromValued.Should().Throw<InvalidOperationException>();
     }
+
+    [Fact]
+    public void ToResult_discards_the_value_and_keeps_the_success_kind()
+    {
+        Result.Ok(42).ToResult().IsSuccess.Should().BeTrue();
+        Result.Ok(42).ToResult().SuccessKind.Should().Be(SuccessKind.Ok);
+        Result.Created(42).ToResult().SuccessKind.Should().Be(SuccessKind.Created);
+    }
+
+    [Fact]
+    public void ToResult_carries_errors_on_failure()
+    {
+        Result<int> failure = new NotFoundError("gone", "X.NotFound");
+
+        Result collapsed = failure.ToResult();
+
+        collapsed.IsError.Should().BeTrue();
+        collapsed.FirstError.Code.Should().Be("X.NotFound");
+    }
 }
