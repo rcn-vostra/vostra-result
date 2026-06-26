@@ -13,11 +13,12 @@ questions. Code follows an agreed design, not the other way around.
 
 ## Status
 
-**All four packages are built, tested, merged to `main`, and published to NuGet** on the
-**`1.0.0-preview`** line (latest **`1.0.0-preview.4`**, 2026-06-26) via tag-triggered OIDC trusted
-publishing (`.github/workflows/release.yml`). **To cut a release: push a `v*` tag** — the tag is the single
-source of truth for the package version (the Pack step passes `-p:Version=$VERSION`). Pre-1.0 hardening
-(benchmarks/NFR-2, packaging polish) is the remaining phase before a stable **1.0.0**.
+**All four packages are built, tested, merged to `main`, and published to NuGet as stable **`1.0.0`**
+(2026-06-26) via tag-triggered OIDC trusted publishing (`.github/workflows/release.yml`). **To cut a
+release: push a `v*` tag** — the tag is the single source of truth for the package version (the Pack step
+passes `-p:Version=$VERSION`). Earlier `1.0.0-preview.1/.3/.4` are also on nuget.org (preview.2 failed/dead).
+The full API review (A−/B+) findings are all addressed; BenchmarkDotNet zero-alloc proof (NFR-2) is the
+remaining nice-to-have.
 
 - **Core** (`Vostra.Results`) — `Result`, `Result<T>`, plus multi-success unions `Result<T1,T2>` /
   `Result<T1,T2,T3>` (added 2026-06-21); `ErrorBase` + built-in kinds; Match/Switch/TryGet; sync + async
