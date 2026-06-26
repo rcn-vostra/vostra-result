@@ -31,15 +31,22 @@ themselves, so the happy path looks exactly like ordinary code:
 ```csharp
 public Result<Order> GetOrder(int id) =>
     _db.Find(id) is { } order
-        ? order                                           // T            -> success
-        : new NotFoundError($"Order {id} not found", "Order.NotFound");  // Error -> failure
+        ? order                                           // T     -> success
+        : Result.NotFoundError($"Order {id} not found");  // Error -> failure
 ```
 
 Errors aren't strings — each is a typed value with a stable `Code`, a human `Message`, and a neutral
-`ErrorType` (the category boundaries map to HTTP later). The built-ins cover the everyday cases
-(each: `new XError(message, code?, causedBy?, metadata?)`):
+`ErrorType` (the category boundaries map to HTTP later). The built-ins cover the everyday cases:
 `ValidationError`, `NotFoundError`, `ConflictError`, `AlreadyExistsError`, `UnauthorizedError`,
-`ForbiddenError`, `Error` (unexpected/500).
+`ForbiddenError`, `Error` (unexpected/500). Build one either way — `new NotFoundError(message, code?,
+causedBy?, metadata?)`, or, to discover the kinds straight from IntelliSense, the matching `Result.`
+factory with the same parameters: `Result.NotFoundError(...)`, `Result.ValidationError(...)`, ….
+
+A `code` is worth supplying only when it adds information the kind doesn't already carry — a validation
+field (`Result.ValidationError("Email is invalid", "Email.Invalid")`), a specific conflict
+(`Result.ConflictError("…", "Order.AlreadyCancelled")`), or to tell apart same-kind failures for different
+entities. On a single-entity getter, `"Order.NotFound"` only restates the return type and the kind, so the
+example above omits it.
 
 Need a domain-specific failure? Subclass `ErrorBase` once and it behaves like any built-in — typed,
 mappable to a status, assertable in tests:
@@ -181,7 +188,7 @@ public Result<Pdf, Html> Render(Doc doc) =>
     doc.PrefersPrint
         ? RenderPdf(doc)                                 // T1   -> success (arm 1)
         : RenderHtml(doc);                               // T2   -> success (arm 2)
-        // return new NotFoundError($"doc {doc.Id}");    // Error -> failure, same channel as Result<T>
+        // return Result.NotFoundError($"doc {doc.Id}"); // Error -> failure, same channel as Result<T>
 ```
 
 Every arm and the error channel convert implicitly — no factories. You consume by matching **every** arm
@@ -415,7 +422,7 @@ var api = new TestHttpClient(client, baseUrl, myFormat);
 
 ## Why it reads well
 
-- **Happy path is implicit** — `return value;` and `return new NotFoundError(...);` both compile.
+- **Happy path is implicit** — `return value;` and `return Result.NotFoundError(...);` both compile.
 - **Failure is typed and survives the wire** — the same error identity flows service → HTTP → test assertion.
 - **Async is first-class** — one `await`, then `Map`/`Then`/`Ensure` interleave freely.
 - **Boundaries collapse into `Result`** — one place maps to HTTP; tests read as domain scripts.

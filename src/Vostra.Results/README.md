@@ -11,8 +11,8 @@ A method that can fail just returns `Result<T>` — and returns the value or the
 ```csharp
 public Result<Order> GetOrder(int id) =>
     _db.Find(id) is { } order
-        ? order                                                       // T     -> success
-        : new NotFoundError($"Order {id} not found", "Order.NotFound"); // Error -> failure
+        ? order                                            // T     -> success
+        : Result.NotFoundError($"Order {id} not found");   // Error -> failure
 ```
 
 Consume it safely — the value is reachable only inside a branch that runs *because* it succeeded, so you
@@ -50,12 +50,15 @@ string mime = Render(doc).Match(
 What you get:
 
 - `readonly struct`, zero happy-path allocation, **zero runtime dependencies**.
-- Built-in error kinds (`ValidationError`, `NotFoundError`, `ConflictError`, `UnauthorizedError`,
-  `ForbiddenError`, `Error`, …) with stable `Code` + neutral `ErrorType`; extend by subclassing `ErrorBase`.
+- Built-in error kinds (`ValidationError`, `NotFoundError`, `ConflictError`, `AlreadyExistsError`,
+  `UnauthorizedError`, `ForbiddenError`, `Error`) with stable `Code` + neutral `ErrorType` — `new` one
+  directly or discover them from IntelliSense via the matching `Result.NotFoundError(...)` factories;
+  extend by subclassing `ErrorBase`.
 - `Map` / `Then` / `Tap` / `Ensure` / `MapError`, full async matrix, LINQ (`from … select`), and `Combine`.
 - Multi-success unions `Result<T1,T2>` / `Result<T1,T2,T3>` — one of several typed success shapes, or an
   error — consumed via exhaustive `Match`/`Switch`.
-- Companion packages: **Vostra.Results.AspNetCore** (`Result` → HTTP) and **Vostra.Results.Testing**
-  (HTTP → `Result` for integration tests).
+- Companion packages: **Vostra.Results.AspNetCore** (`Result` → HTTP), **Vostra.Results.Testing**
+  (transport-neutral chain & assert over any `Task<Result<T>>`), and **Vostra.Results.AspNetCore.Testing**
+  (HTTP → `Result` test client).
 
 **Full walkthrough:** see the [Usage Guide](https://github.com/rcn-vostra/vostra-result/blob/main/docs/usage.md).

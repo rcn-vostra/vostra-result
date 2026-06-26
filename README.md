@@ -12,7 +12,7 @@ valid:
 public Result<Order> GetOrder(int id) =>
     _db.Find(id) is { } order
         ? order                                            // success — just return it
-        : new NotFoundError($"Order {id} not found");      // failure — typed, no throw
+        : Result.NotFoundError($"Order {id} not found");   // failure — typed, no throw
 
 string label = GetOrder(id).Match(o => $"#{o.Id}", errs => errs[0].Message);
 ```
@@ -21,7 +21,7 @@ That same typed failure then flows, unchanged, all the way to the HTTP wire and 
 
 ## 📖 [Usage Guide](docs/usage.md)
 
-Start here — a short, example-first walkthrough of all three packages (returning results, `Match`/`Then`/LINQ,
+Start here — a short, example-first walkthrough of all four packages (returning results, `Match`/`Then`/LINQ,
 async chaining, multi-success unions `Result<T1,T2[,T3]>`, HTTP mapping, and typed-error integration testing
 incl. chaining dependent requests).
 
@@ -40,7 +40,14 @@ a DI-configured, open/closed map — so a new error kind needs no mapping edits.
 
 ## Vostra.Results.Testing
 
-Integration-testing toolkit: a `TestHttpClient` that collapses the HTTP round-trip back into a `Result<T>`
-with the **typed error** rebuilt, plus zero-dependency fluent assertions (`ShouldBeSuccess`,
-`ShouldHaveError`, kind sugar) — so tests assert identity, not substrings. See
-[the package README](src/Vostra.Results.Testing/README.md).
+Transport-neutral testing toolkit: the fluent **chain-and-assert** layer over **any** `Task<Result<T>>` —
+`Then` chaining plus zero-dependency fluent assertions (`ShouldBeSuccess`, `ShouldHaveError`, kind sugar) and
+`WithRequestContext` diagnostics, so tests assert identity, not substrings. Core-only (no ASP.NET Core dep).
+See [the package README](src/Vostra.Results.Testing/README.md).
+
+## Vostra.Results.AspNetCore.Testing
+
+HTTP integration-testing toolkit built on `Vostra.Results.Testing`: a `TestHttpClient` that collapses the
+HTTP round-trip back into a `Result<T>` with the **typed error** rebuilt from the RFC 7807 response — so
+HTTP tests read like the domain script they check. See
+[the package README](src/Vostra.Results.AspNetCore.Testing/README.md).
