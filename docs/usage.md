@@ -42,10 +42,10 @@ Errors aren't strings — each is a typed value with a stable `Code`, a human `M
 causedBy?, metadata?)`, or, to discover the kinds straight from IntelliSense, the matching `Result.`
 factory with the same parameters: `Result.NotFoundError(...)`, `Result.ValidationError(...)`, ….
 
-A `code` is worth supplying only when it adds information the kind doesn't already carry — a validation
-field (`Result.ValidationError("Email is invalid", "Email.Invalid")`), a specific conflict
+A `code` is worth supplying only when it adds information the kind doesn't already carry — a specific
+validation rule (`Result.ValidationError("Email is invalid", code: "Email.Invalid")`), a specific conflict
 (`Result.ConflictError("…", "Order.AlreadyCancelled")`), or to tell apart same-kind failures for different
-entities. On a single-entity getter, `"Order.NotFound"` only restates the return type and the kind, so the
+entities. (`ValidationError` also takes a `field:` — see [§ validate-all](#combine-many--validate-all).) On a single-entity getter, `"Order.NotFound"` only restates the return type and the kind, so the
 example above omits it.
 
 Need a domain-specific failure? Subclass `ErrorBase` once and it behaves like any built-in — typed,
@@ -143,6 +143,18 @@ Result combined                  = Result.Combine(v1, v2);       // valueless
 Result<IReadOnlyList<Saved>> saved =
     await items.SelectAsync(i => SaveAsync(i), maxConcurrency: 4); // throttled fan-out, then combine
 ```
+
+When the accumulated failures are validation errors, give each a **`field:`** — the HTTP layer (§2) then
+groups them into an RFC 7807 field-map keyed by *input name* instead of by error code:
+
+```csharp
+new ValidationError("Email is required.", field: "email")
+new ValidationError("Qty must be positive.", field: "qty")
+// → problem+json "errors": { "email": ["Email is required."], "qty": ["Qty must be positive."] }
+```
+
+Without a `field:`, a validation error is keyed by its `Code` in that map (so unfielded errors land under
+`"General.Validation"`). The `field` value is stored under the public `ErrorBase.FieldMetadataKey` constant.
 
 ### Keep every outcome (don't collapse)
 
@@ -274,6 +286,7 @@ error's **identity** (`code` + `errorType`) on the wire — not just a message:
 // success            { "operationId": "…", "data": { … } }
 // list               { "operationId": "…", "data": [ … ], "pagination": { "page":1, "pageSize":20, "totalCount":57, "totalPages":3 } }
 // error (RFC 7807)   { "status":404, "detail":"Order 7 not found", "code":"Order.NotFound", "errorType":"NotFound", … }
+// validation         { "status":400, "errorType":"Validation", "errors": { "email":["Email is required."], "qty":["Qty must be positive."] } }
 ```
 
 That `code` + `errorType` is the bridge to §3: because the identity survives the round-trip, tests can
@@ -419,6 +432,23 @@ var api = new TestHttpClient(client, baseUrl, myFormat);
 ```
 
 ---
+
+## Sharp edges (by design)
+
+A few deliberate behaviors worth knowing before they surprise you:
+
+- **`default(Result<T>)` is a *failure*, not a success.** An uninitialized result reads as faulted (a single
+  `Result.Uninitialized` error), so a struct you forgot to assign can never masquerade as a valid value. The
+  same holds for `Combine` handed an empty error set — it stays faulted rather than flipping to success.
+- **Combinator delegates are not null-checked.** Passing a `null` `map`/`onOk`/`next` throws
+  `NullReferenceException`, not `ArgumentNullException` — a uniform, allocation-free convention across the
+  whole surface. Pass real delegates.
+- **Multi-success unions are a terminal match surface.** There is no `Map`/`Then`/LINQ *through* a
+  `Result<T1,T2[,T3]>` — chain with `Result<T>` combinators, then `Match` at the boundary. And a
+  `Result<int,int>` (same-typed arms) resolves an implicit `5` to **arm 1** — use `.First`/`.Second`
+  explicitly when the arms share a type.
+- **Validation field-maps need a `field:`.** Validation errors without one are grouped under their `Code`
+  in the RFC 7807 `errors` map (see [§ validate-all](#combine-many--validate-all)).
 
 ## Why it reads well
 

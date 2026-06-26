@@ -35,7 +35,7 @@ public static class ProblemDetailsErrorReader
 
                 foreach (var message in field.Value.EnumerateArray())
                 {
-                    var extra = new Dictionary<string, object?> { ["field"] = field.Name };
+                    var extra = new Dictionary<string, object?> { [ErrorBase.FieldMetadataKey] = field.Name };
                     validation.Add(Create(ErrorType.Validation, code, message.GetString() ?? string.Empty, statusCode, extra));
                 }
             }
@@ -83,7 +83,7 @@ public static class ProblemDetailsErrorReader
 
         return type switch
         {
-            ErrorType.Validation => new ValidationError(message, code, metadata: metadata),
+            ErrorType.Validation => new ValidationError(message, code: code, metadata: metadata),
             ErrorType.NotFound => new NotFoundError(message, code, metadata: metadata),
             ErrorType.Conflict => new ConflictError(message, code, metadata: metadata),
             ErrorType.Unauthorized => new UnauthorizedError(message, code, metadata: metadata),

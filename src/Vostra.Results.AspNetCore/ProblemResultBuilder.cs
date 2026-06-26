@@ -78,7 +78,7 @@ internal static class ProblemResultBuilder
 
     private static string FieldKey(ErrorBase error)
     {
-        if (error.Metadata is { } meta && meta.TryGetValue("field", out var value) && value is string field)
+        if (error.Metadata is { } meta && meta.TryGetValue(ErrorBase.FieldMetadataKey, out var value) && value is string field)
         {
             return field;
         }

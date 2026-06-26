@@ -4,16 +4,41 @@ namespace Vostra.Results;
 public sealed class ValidationError : ErrorBase
 {
     /// <summary>Creates a <see cref="ValidationError"/>.</summary>
+    /// <param name="message">Human-readable description.</param>
+    /// <param name="field">
+    /// Optional name of the input field this error refers to. When supplied it is stored under
+    /// <see cref="ErrorBase.FieldMetadataKey"/> so the ASP.NET Core layer can render an RFC 7807 field-map.
+    /// </param>
+    /// <param name="code">Stable, machine-readable identity.</param>
+    /// <param name="causedBy">Optional originating exception.</param>
+    /// <param name="metadata">Optional metadata bag (merged with <paramref name="field"/> when both are given).</param>
     public ValidationError(
         string message,
+        string? field = null,
         string code = "General.Validation",
         Exception? causedBy = null,
         IReadOnlyDictionary<string, object?>? metadata = null)
-        : base(code, message, ErrorType.Validation, causedBy, metadata) { }
+        : base(code, message, ErrorType.Validation, causedBy, MergeField(field, metadata)) { }
+
+    /// <summary>Merges <paramref name="field"/> into <paramref name="metadata"/> under <see cref="ErrorBase.FieldMetadataKey"/>.</summary>
+    private static IReadOnlyDictionary<string, object?>? MergeField(string? field, IReadOnlyDictionary<string, object?>? metadata)
+    {
+        if (field is null)
+        {
+            return metadata;
+        }
+
+        var merged = metadata is null
+            ? new Dictionary<string, object?>(1)
+            : new Dictionary<string, object?>(metadata);
+        merged[FieldMetadataKey] = field;
+        return merged;
+    }
 
     /// <inheritdoc />
     protected override ErrorBase CloneWith(string code, string message, Exception? causedBy, IReadOnlyDictionary<string, object?>? metadata) =>
-        new ValidationError(message, code, causedBy, metadata);
+        // metadata already carries the field key (if any), so it is preserved across With*/Prefix.
+        new ValidationError(message, code: code, causedBy: causedBy, metadata: metadata);
 }
 
 /// <summary>A requested resource was not found.</summary>

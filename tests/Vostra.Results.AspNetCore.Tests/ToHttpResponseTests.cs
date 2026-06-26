@@ -163,12 +163,10 @@ public class ToHttpResponseTests
     [Fact]
     public async Task All_validation_errors_render_field_map_keyed_by_metadata_field()
     {
-        var skuField = new Dictionary<string, object?> { ["field"] = "Sku" };
-        var priceField = new Dictionary<string, object?> { ["field"] = "Price" };
         Result<int> result = new ErrorBase[]
         {
-            new ValidationError("required", metadata: skuField),
-            new ValidationError("must be > 0", metadata: priceField),
+            new ValidationError("required", field: "Sku"),
+            new ValidationError("must be > 0", field: "Price"),
         };
         var ctx = Context();
         var res = await HttpResultHarness.Execute(result.ToHttpResponse(ctx), ctx.RequestServices);
@@ -184,11 +182,10 @@ public class ToHttpResponseTests
     [Fact]
     public async Task Validation_errors_on_same_field_merge_into_one_key()
     {
-        var skuField = new Dictionary<string, object?> { ["field"] = "Sku" };
         Result<int> result = new ErrorBase[]
         {
-            new ValidationError("required", metadata: skuField),
-            new ValidationError("too short", metadata: skuField),
+            new ValidationError("required", field: "Sku"),
+            new ValidationError("too short", field: "Sku"),
         };
         var ctx = Context();
         var res = await HttpResultHarness.Execute(result.ToHttpResponse(ctx), ctx.RequestServices);

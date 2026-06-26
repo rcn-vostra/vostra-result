@@ -36,8 +36,7 @@ public sealed class TestApiHost : IAsyncLifetime
         app.MapPost("/products", (Product input, HttpContext ctx) =>
         {
             Result<Product> result = string.IsNullOrWhiteSpace(input.Name)
-                ? new ValidationError("Name is required.", "Product.Validation",
-                    metadata: new Dictionary<string, object?> { ["field"] = "name" })
+                ? new ValidationError("Name is required.", field: "name", code: "Product.Validation")
                 : Result.Created(new Product(99, input.Name));
             return result.ToHttpResponse(ctx);
         });

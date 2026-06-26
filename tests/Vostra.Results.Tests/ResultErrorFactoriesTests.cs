@@ -67,11 +67,21 @@ public class ResultErrorFactoriesTests
     [Fact]
     public void Factory_converts_to_a_failed_nongeneric_result()
     {
-        Result result = Result.ValidationError("name is required", "Name.Required");
+        Result result = Result.ValidationError("name is required", code: "Name.Required");
 
         result.IsError.Should().BeTrue();
         result.FirstError.Should().BeOfType<ValidationError>();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
         result.FirstError.Code.Should().Be("Name.Required");
+    }
+
+    [Fact]
+    public void ValidationError_field_parameter_populates_the_field_metadata_key()
+    {
+        var error = Result.ValidationError("Email is invalid", field: "email", code: "Email.Invalid");
+
+        error.Code.Should().Be("Email.Invalid");
+        error.Metadata.Should().ContainKey(ErrorBase.FieldMetadataKey);
+        error.Metadata![ErrorBase.FieldMetadataKey].Should().Be("email");
     }
 }

@@ -44,4 +44,26 @@ public class ErrorTests
         error.CausedBy.Should().BeSameAs(ex);
         error.Metadata.Should().ContainKey("orderId");
     }
+
+    [Fact]
+    public void ValidationError_without_a_field_leaves_metadata_null()
+    {
+        new ValidationError("bad").Metadata.Should().BeNull();
+    }
+
+    [Fact]
+    public void ValidationError_field_merges_with_metadata_and_survives_a_clone()
+    {
+        var meta = new Dictionary<string, object?> { ["traceId"] = "abc" };
+        var error = new ValidationError("bad", field: "email", metadata: meta);
+
+        error.Metadata.Should().ContainKey("traceId");
+        error.Metadata![ErrorBase.FieldMetadataKey].Should().Be("email");
+
+        // CloneWith carries the (field-bearing) metadata through, so With* preserve the field.
+        var recoded = error.WithCode("Email.Invalid");
+        recoded.Code.Should().Be("Email.Invalid");
+        recoded.Metadata!["traceId"].Should().Be("abc");
+        recoded.Metadata[ErrorBase.FieldMetadataKey].Should().Be("email");
+    }
 }

@@ -25,7 +25,7 @@ public class ResultAssertionsTests
     [Fact]
     public void ShouldHaveError_by_code_passes_when_any_error_matches()
     {
-        Result<int> result = new ErrorBase[] { new ValidationError("a", "F.A"), new ValidationError("b", "F.B") };
+        Result<int> result = new ErrorBase[] { new ValidationError("a", code: "F.A"), new ValidationError("b", code: "F.B") };
 
         var chained = result.ShouldHaveError("F.B");
 

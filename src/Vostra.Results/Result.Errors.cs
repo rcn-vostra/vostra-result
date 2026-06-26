@@ -15,13 +15,17 @@ namespace Vostra.Results;
 /// </remarks>
 public readonly partial struct Result
 {
-    /// <summary>Creates a <see cref="Vostra.Results.ValidationError"/> (input failed validation).</summary>
+    /// <summary>
+    /// Creates a <see cref="Vostra.Results.ValidationError"/> (input failed validation). Pass
+    /// <paramref name="field"/> to name the offending input — it drives the ASP.NET Core RFC 7807 field-map.
+    /// </summary>
     public static ValidationError ValidationError(
         string message,
+        string? field = null,
         string code = "General.Validation",
         Exception? causedBy = null,
         IReadOnlyDictionary<string, object?>? metadata = null) =>
-        new(message, code, causedBy, metadata);
+        new(message, field, code, causedBy, metadata);
 
     /// <summary>Creates a <see cref="Vostra.Results.NotFoundError"/> (a requested resource was not found).</summary>
     public static NotFoundError NotFoundError(

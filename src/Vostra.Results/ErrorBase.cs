@@ -7,6 +7,14 @@ namespace Vostra.Results;
 /// </summary>
 public abstract class ErrorBase : IEquatable<ErrorBase>
 {
+    /// <summary>
+    /// Conventional <see cref="Metadata"/> key naming the input field an error refers to. When every error in a
+    /// failed result is a <see cref="ValidationError"/>, the ASP.NET Core layer groups them by this key into the
+    /// RFC 7807 <c>errors</c> field-map (falling back to <see cref="Code"/> when absent). Set it via the
+    /// <c>field</c> parameter on <see cref="ValidationError"/> rather than writing metadata by hand.
+    /// </summary>
+    public const string FieldMetadataKey = "field";
+
     /// <summary>Initializes a new <see cref="ErrorBase"/>.</summary>
     protected ErrorBase(
         string code,
