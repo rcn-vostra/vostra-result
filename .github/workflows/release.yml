@@ -36,8 +36,10 @@ jobs:
       - name: Test
         run: dotnet test -c Release --no-build
 
+      # Version comes from the tag (single source of truth) — without this, pack uses the
+      # hardcoded Directory.Build.props version and the push below can't find the tagged file.
       - name: Pack
-        run: dotnet pack -c Release -p:ContinuousIntegrationBuild=true -o ./artifacts
+        run: dotnet pack -c Release -p:ContinuousIntegrationBuild=true -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
 
       # Mint a short-lived (≈1h) NuGet API key via OIDC, just before pushing.
       # Requires a Trusted Publishing policy on nuget.org for this repo + workflow file (release.yml).
